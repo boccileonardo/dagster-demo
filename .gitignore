@@ -88,3 +88,5 @@ cython_debug/
 
 # ruff
 .ruff_cache/
+
+faker/data/

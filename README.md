@@ -18,4 +18,7 @@ Demo should include retailers that:
 - Send separate dimension and fact tables.
 - Send multiple files for each date.
 - Send a single file with many dates.
-- Send multiple file for each store, each including multiple dates.
+- Send multiple files for each store, each including multiple dates.
+- Send daily files.
+- Send weekly files containing a single week-end date.
+- Send weekly files containing all days of the previous week.

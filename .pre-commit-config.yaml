@@ -19,7 +19,3 @@ repos:
     args: [ --fix ]
     name: ruff linter
     #exclude: test_example_module.py|run_pipeline.py
-- repo: https://github.com/jendrikseipp/vulture
-  rev: 'v2.13' # or any later Vulture version
-  hooks:
-  - id: vulture

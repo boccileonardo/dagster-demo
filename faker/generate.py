@@ -21,8 +21,8 @@ def generate_uniform_dates(start_date, end_date, missing_prob=0.05):
 START_DATE = datetime.today() - timedelta(days=90)
 END_DATE = datetime.today()
 DATES = generate_uniform_dates(START_DATE, END_DATE, missing_prob=0.05)
-PRODUCTS = [fake.unique.word() for _ in range(20)]
-STORES = [f"Store_{i:03d}" for i in range(1, 6)]
+PRODUCTS = [fake.name() for _ in range(200)]
+STORES = [f"Store_{i:03d}" for i in range(1, 50)]
 
 
 # --- Additional attribute generators ---
@@ -72,8 +72,8 @@ def random_date(start_year=2024, end_year=2025):
     )
 
 
-# --- Enhanced record generators ---
-def generate_sales_record(date, store, product, full=False, partial=False):
+# --- Record generators ---
+def generate_sales_record(date, store, product, partial=False):
     base = {
         "date": date.strftime("%Y-%m-%d"),
         "store": store,
@@ -81,7 +81,7 @@ def generate_sales_record(date, store, product, full=False, partial=False):
         "sales_qty": random.randint(0, 50),
         "price": round(random.uniform(1.0, 100.0), 2),
     }
-    if full:
+    if not partial:
         base.update(
             {
                 "sales_value_usd": round(base["sales_qty"] * base["price"], 2),
@@ -92,7 +92,7 @@ def generate_sales_record(date, store, product, full=False, partial=False):
                 "return_value_local_currency": round(random.uniform(0, 50), 2),
             }
         )
-    elif partial:
+    else:
         base.update(
             {
                 "sales_value_usd": round(base["sales_qty"] * base["price"], 2),
@@ -104,14 +104,14 @@ def generate_sales_record(date, store, product, full=False, partial=False):
     return base
 
 
-def generate_inventory_record(date, store, product, full=False, partial=False):
+def generate_inventory_record(date, store, product, partial=False):
     base = {
         "date": date.strftime("%Y-%m-%d"),
         "store": store,
         "product": product,
         "inventory_qty": random.randint(0, 200),
     }
-    if full:
+    if not partial:
         base.update(
             {
                 "units_on_order": random.randint(0, 100),
@@ -126,7 +126,7 @@ def generate_inventory_record(date, store, product, full=False, partial=False):
                 ),
             }
         )
-    elif partial:
+    else:
         base.update(
             {
                 "value_on_hand": round(
@@ -137,34 +137,34 @@ def generate_inventory_record(date, store, product, full=False, partial=False):
     return base
 
 
-# --- Enhanced dimension generators ---
-def generate_product(full=False, partial=False):
-    name = fake.unique.word()
-    base = {"product": name, "category": fake.word()}
-    if full:
+# --- Dimension generators ---
+def generate_product(name, partial=False):
+    base = {
+        "id": random.randint(1000, 9999),
+        "product": name,
+        "category": random_subcategory(),
+    }
+    if not partial:
         base.update(
             {
-                "name": fake.catch_phrase(),
                 "sector": random_sector(),
-                "subcategory": random_subcategory(),
                 "launch_date": str(random_date()),
                 "GTIN": random_gtin(),
+                "description": fake.catch_phrase_verb(),
             }
         )
-    elif partial:
+    else:
         base.update(
             {
-                "name": fake.catch_phrase(),
                 "GTIN": random_gtin(),
             }
         )
     return base
 
 
-def generate_store(full=False, partial=False):
-    name = fake.unique.word()
-    base = {"store": name, "city": fake.city()}
-    if full:
+def generate_store(name, partial=False):
+    base = {"id": random.randint(1000, 9999), "store": name, "city": fake.city()}
+    if not partial:
         base.update(
             {
                 "address": random_address(),
@@ -174,7 +174,7 @@ def generate_store(full=False, partial=False):
                 "global_location_number": random_location_number(),
             }
         )
-    elif partial:
+    else:
         base.update(
             {
                 "address": random_address(),
@@ -184,82 +184,67 @@ def generate_store(full=False, partial=False):
     return base
 
 
-# --- Modified data generation functions ---
-def one_big_table():
+# --- Data generation functions ---
+def write_df(df: pl.DataFrame, path, file_format):
+    """Write a Polars DataFrame to the specified format."""
+    if file_format == "parquet":
+        df.write_parquet(path)
+    elif file_format == "csv":
+        df.write_csv(path)
+    elif file_format == "json":
+        df.write_json(path)
+    elif file_format == "txt":
+        # Write as CSV but with .txt extension and pipe separator.
+        df.write_csv(path, separator="|")
+    else:
+        raise ValueError(f"Unsupported file format: {file_format}")
+
+
+def one_big_table(file_format="parquet"):
     out_dir = os.path.join(DATA_DIR, "one_big_table")
     os.makedirs(out_dir, exist_ok=True)
     records = [
         {
-            **generate_sales_record(date, store, product, full=True),
-            **generate_inventory_record(date, store, product, full=True),
+            **generate_sales_record(date, store, product, partial=True),
+            **generate_inventory_record(date, store, product, partial=True),
         }
         for date in DATES
         for store in STORES
         for product in PRODUCTS
     ]
     df = pl.DataFrame(records)
-    df.write_parquet(f"{out_dir}/one_big_table.parquet")
+
+    write_df(df, f"{out_dir}/one_big_table.{file_format}", file_format)
 
 
-def separate_dim_fact():
+def separate_dim_fact(file_format="parquet"):
     out_dir = os.path.join(DATA_DIR, "separate_dim_fact")
     os.makedirs(out_dir, exist_ok=True)
-    df_products = pl.DataFrame([generate_product(partial=True) for _ in PRODUCTS])
-    df_stores = pl.DataFrame([generate_store(partial=True) for _ in STORES])
+    df_products = pl.DataFrame(
+        [generate_product(name=product, partial=True) for product in PRODUCTS]
+    )
+    df_stores = pl.DataFrame(
+        [generate_store(name=store, partial=True) for store in STORES]
+    )
+    products_in_dim = df_products.select("id").unique().to_series().to_list()
+    stores_in_dim = df_products.select("id").unique().to_series().to_list()
     records = [
         generate_sales_record(date, store, product, partial=True)
         for date in DATES
-        for store in STORES
-        for product in PRODUCTS
+        for store in stores_in_dim
+        for product in products_in_dim
     ]
     df_fact = pl.DataFrame(records)
-    df_products.write_parquet(f"{out_dir}/dim_products.parquet")
-    df_stores.write_parquet(f"{out_dir}/dim_stores.parquet")
-    df_fact.write_parquet(f"{out_dir}/fact_sales.parquet")
+
+    write_df(df_products, f"{out_dir}/dim_products.{file_format}", file_format)
+    write_df(df_stores, f"{out_dir}/dim_stores.{file_format}", file_format)
+    write_df(df_fact, f"{out_dir}/fact_sales.{file_format}", file_format)
 
 
-def files_per_date():
+def files_per_date(file_format="parquet"):
     out_dir = os.path.join(DATA_DIR, "files_per_date")
     os.makedirs(out_dir, exist_ok=True)
-    for date in DATES:
-        records = [
-            generate_sales_record(date, store, product, full=True)
-            for store in STORES
-            for product in PRODUCTS
-        ]
-        df = pl.DataFrame(records)
-        df.write_parquet(f"{out_dir}/sales_{date.strftime('%Y%m%d')}.parquet")
 
-
-def single_file_many_dates():
-    out_dir = os.path.join(DATA_DIR, "single_file_many_dates")
-    os.makedirs(out_dir, exist_ok=True)
-    records = [
-        generate_sales_record(date, store, product, partial=True)
-        for date in DATES
-        for store in STORES
-        for product in PRODUCTS
-    ]
-    df = pl.DataFrame(records)
-    df.write_parquet(f"{out_dir}/all_dates.parquet")
-
-
-def files_per_store():
-    out_dir = os.path.join(DATA_DIR, "files_per_store")
-    os.makedirs(out_dir, exist_ok=True)
-    for store in STORES:
-        records = [
-            generate_inventory_record(date, store, product, full=True)
-            for date in DATES
-            for product in PRODUCTS
-        ]
-        df = pl.DataFrame(records)
-        df.write_parquet(f"{out_dir}/sales_{store}.parquet")
-
-
-def daily_files():
-    out_dir = os.path.join(DATA_DIR, "daily_files")
-    os.makedirs(out_dir, exist_ok=True)
     for date in DATES:
         records = [
             generate_sales_record(date, store, product, partial=True)
@@ -267,29 +252,79 @@ def daily_files():
             for product in PRODUCTS
         ]
         df = pl.DataFrame(records)
-        df.write_parquet(f"{out_dir}/daily_{date.strftime('%Y%m%d')}.parquet")
+        write_df(
+            df, f"{out_dir}/sales_{date.strftime('%Y%m%d')}.{file_format}", file_format
+        )
 
 
-def weekly_files_single_date():
-    out_dir = os.path.join(DATA_DIR, "weekly_files_single_date")
+def single_file_many_dates(file_format="parquet"):
+    out_dir = os.path.join(DATA_DIR, "single_file_many_dates")
     os.makedirs(out_dir, exist_ok=True)
-    for i in range(0, len(DATES), 7):
-        week_dates = DATES[i : i + 7]
-        week_end = week_dates[0]
+    records = [
+        generate_sales_record(date, store, product, partial=False)
+        for date in DATES
+        for store in STORES
+        for product in PRODUCTS
+    ]
+    df = pl.DataFrame(records)
+
+    write_df(df, f"{out_dir}/all_dates.{file_format}", file_format)
+
+
+def files_per_store(file_format="parquet"):
+    out_dir = os.path.join(DATA_DIR, "files_per_store")
+    os.makedirs(out_dir, exist_ok=True)
+
+    for store in STORES:
         records = [
-            generate_sales_record(week_end, store, product, full=True)
+            generate_inventory_record(date, store, product, partial=False)
+            for date in DATES
+            for product in PRODUCTS
+        ]
+        df = pl.DataFrame(records)
+        write_df(df, f"{out_dir}/sales_{store}.{file_format}", file_format)
+
+
+def daily_files(file_format="parquet"):
+    out_dir = os.path.join(DATA_DIR, "daily_files")
+    os.makedirs(out_dir, exist_ok=True)
+
+    for date in DATES:
+        records = [
+            generate_sales_record(date, store, product, partial=True)
             for store in STORES
             for product in PRODUCTS
         ]
         df = pl.DataFrame(records)
-        df.write_parquet(
-            f"{out_dir}/weekly_single_{week_end.strftime('%Y%m%d')}.parquet"
+        write_df(
+            df, f"{out_dir}/daily_{date.strftime('%Y%m%d')}.{file_format}", file_format
         )
 
 
-def weekly_files_all_days():
+def weekly_files_single_date(file_format="parquet"):
+    out_dir = os.path.join(DATA_DIR, "weekly_files_single_date")
+    os.makedirs(out_dir, exist_ok=True)
+
+    for i in range(0, len(DATES), 7):
+        week_dates = DATES[i : i + 7]
+        week_end = week_dates[0]
+        records = [
+            generate_sales_record(week_end, store, product, partial=False)
+            for store in STORES
+            for product in PRODUCTS
+        ]
+        df = pl.DataFrame(records)
+        write_df(
+            df,
+            f"{out_dir}/weekly_single_{week_end.strftime('%Y%m%d')}.{file_format}",
+            file_format,
+        )
+
+
+def weekly_files_all_days(file_format="parquet"):
     out_dir = os.path.join(DATA_DIR, "weekly_files_all_days")
     os.makedirs(out_dir, exist_ok=True)
+
     for i in range(0, len(DATES), 7):
         week_dates = DATES[i : i + 7]
         records = [
@@ -301,17 +336,19 @@ def weekly_files_all_days():
         if records:
             week_end = week_dates[0]
             df = pl.DataFrame(records)
-            df.write_parquet(
-                f"{out_dir}/weekly_all_{week_end.strftime('%Y%m%d')}.parquet"
+            write_df(
+                df,
+                f"{out_dir}/weekly_all_{week_end.strftime('%Y%m%d')}.{file_format}",
+                file_format,
             )
 
 
 if __name__ == "__main__":
-    one_big_table()
-    separate_dim_fact()
+    one_big_table("json")
+    separate_dim_fact("csv")
     files_per_date()
     single_file_many_dates()
-    files_per_store()
+    files_per_store("txt")
     daily_files()
     weekly_files_single_date()
     weekly_files_all_days()

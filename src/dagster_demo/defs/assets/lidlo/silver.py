@@ -1,6 +1,6 @@
 import dagster as dg
 import polars as pl
-from dagster_demo.defs.assets.carretwo import config as cfg
+from dagster_demo.defs.assets.lidlo import config as cfg
 from dagster_demo.components.refinement import (
     silver_fct_processing,
     silver_prod_dim_processing,
@@ -21,10 +21,10 @@ from dagster_demo.components.refinement import (
     },
     kinds=["polars", "deltalake", "silver"],
 )
-def silver_carretwo_day_fct(
-    context: dg.AssetExecutionContext, bronze_carretwo_day_fct: pl.LazyFrame
+def silver_lidlo_day_fct(
+    context: dg.AssetExecutionContext, bronze_lidlo_day_fct: pl.LazyFrame
 ) -> pl.LazyFrame:
-    df = bronze_carretwo_day_fct.select(
+    df = bronze_lidlo_day_fct.select(
         pl.col("date").alias("time_period_end_date").str.to_date("%Y-%m-%d"),
         pl.col("store").alias("store_id"),
         pl.col("product").alias("prod_id"),
@@ -49,10 +49,10 @@ def silver_carretwo_day_fct(
     },
     kinds=["polars", "deltalake", "silver"],
 )
-def silver_carretwo_prod_dim(
-    context: dg.AssetExecutionContext, bronze_carretwo_day_fct: pl.LazyFrame
+def silver_lidlo_prod_dim(
+    context: dg.AssetExecutionContext, bronze_lidlo_day_fct: pl.LazyFrame
 ) -> pl.LazyFrame:
-    df = bronze_carretwo_day_fct.select(pl.col("product").alias("prod_id")).unique()
+    df = bronze_lidlo_day_fct.select(pl.col("product").alias("prod_id")).unique()
     df = silver_prod_dim_processing(context=context, df=df, config=cfg)
     return df
 
@@ -69,10 +69,10 @@ def silver_carretwo_prod_dim(
     },
     kinds=["polars", "deltalake", "silver"],
 )
-def silver_carretwo_site_dim(
-    context: dg.AssetExecutionContext, bronze_carretwo_day_fct: pl.LazyFrame
+def silver_lidlo_site_dim(
+    context: dg.AssetExecutionContext, bronze_lidlo_day_fct: pl.LazyFrame
 ) -> pl.LazyFrame:
-    df = bronze_carretwo_day_fct.select(pl.col("store").alias("site_id")).unique()
+    df = bronze_lidlo_day_fct.select(pl.col("store").alias("site_id")).unique()
     df = silver_site_dim_processing(context=context, df=df, config=cfg)
     return df
 
@@ -90,11 +90,11 @@ def silver_carretwo_site_dim(
     kinds=["polars", "deltalake", "silver"],
     tags={"aggregation": "day_to_week"},
 )
-def silver_carretwo_week_fct(
-    context: dg.AssetExecutionContext, silver_carretwo_day_fct: pl.LazyFrame
+def silver_lidlo_week_fct(
+    context: dg.AssetExecutionContext, silver_lidlo_day_fct: pl.LazyFrame
 ) -> pl.LazyFrame:
     df = silver_fct_downsample(
-        context=context, df=silver_carretwo_day_fct, sampling_period="1w", config=cfg
+        context=context, df=silver_lidlo_day_fct, sampling_period="1w", config=cfg
     )
     return df
 
@@ -112,21 +112,21 @@ def silver_carretwo_week_fct(
     kinds=["polars", "deltalake", "silver"],
     tags={"aggregation": "day_to_month"},
 )
-def silver_carretwo_month_fct(
-    context: dg.AssetExecutionContext, silver_carretwo_day_fct: pl.LazyFrame
+def silver_lidlo_month_fct(
+    context: dg.AssetExecutionContext, silver_lidlo_day_fct: pl.LazyFrame
 ) -> pl.LazyFrame:
     df = silver_fct_downsample(
-        context=context, df=silver_carretwo_day_fct, sampling_period="1mo", config=cfg
+        context=context, df=silver_lidlo_day_fct, sampling_period="1mo", config=cfg
     )
     return df
 
 
 defs = dg.Definitions(
     assets=[
-        silver_carretwo_day_fct,
-        silver_carretwo_prod_dim,
-        silver_carretwo_site_dim,
-        silver_carretwo_week_fct,
-        silver_carretwo_month_fct,
+        silver_lidlo_day_fct,
+        silver_lidlo_prod_dim,
+        silver_lidlo_site_dim,
+        silver_lidlo_week_fct,
+        silver_lidlo_month_fct,
     ],
 )

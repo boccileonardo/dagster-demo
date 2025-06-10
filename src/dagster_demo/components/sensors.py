@@ -1,6 +1,8 @@
 import os
 import dagster as dg
 
+# FIXME: RUN REQUEST TARGETING ALL ASSETS SHOULD NOT BE LAUNCHING, TRY DROPPING FROM BRONZE ASSET
+
 
 def detect_new_files_in_dir(context: dg.SensorEvaluationContext, directory: str):
     # find last modified date already processed

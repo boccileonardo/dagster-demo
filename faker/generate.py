@@ -241,22 +241,6 @@ def separate_dim_fact(file_format="parquet"):
     write_df(df_fact, f"{out_dir}/fact_sales.{file_format}", file_format)
 
 
-def files_per_date(file_format="parquet"):
-    out_dir = os.path.join(DATA_DIR, "files_per_date")
-    os.makedirs(out_dir, exist_ok=True)
-
-    for date in DATES:
-        records = [
-            generate_sales_record(date, store, product, partial=True)
-            for store in STORES
-            for product in PRODUCTS
-        ]
-        df = pl.DataFrame(records)
-        write_df(
-            df, f"{out_dir}/sales_{date.strftime('%Y%m%d')}.{file_format}", file_format
-        )
-
-
 def single_file_many_dates(file_format="parquet"):
     out_dir = os.path.join(DATA_DIR, "single_file_many_dates")
     os.makedirs(out_dir, exist_ok=True)
@@ -346,7 +330,6 @@ def weekly_files_all_days(file_format="parquet"):
 if __name__ == "__main__":
     one_big_table("json")
     separate_dim_fact("csv")
-    files_per_date()
     single_file_many_dates()
     files_per_store("txt")
     daily_files()

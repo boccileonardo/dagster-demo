@@ -5,6 +5,7 @@ version = "0.1.0"
 dependencies = [
     "dagster-polars[deltalake]>=0.27.2",
     "dagster>=1.10.18",
+    "deltalake<1.0.0", #TODO: TEST NATIVE POLARS SINK DELTA AND OPEN ISSUE FOR DELTALAKE>1
     "patito>=0.8.3",
     "polars[deltalake]>=1.30.0",
 ]

@@ -1,23 +1,20 @@
 import dagster as dg
 import polars as pl
-from dagster_polars import PolarsParquetIOManager
+from dagster_polars import PolarsDeltaIOManager
 from dagster_demo.components.constants import LANDING_ZONE
-from dagster_demo.components.ingestion import add_ingestion_metadata
+from dagster_demo.components.ingestion import bronze_processing
 from dagster_demo.components.sensors import detect_new_files_in_dir
 
-RETAILER_ID = "1001"
+RETAILER_ID = 1001
 DIRECTORY = f"{LANDING_ZONE}/{RETAILER_ID}/"
 
 
-@dg.asset(io_manager_key="polars_parquet_io_manager", group_name="carretwo")
+@dg.asset(io_manager_key="bronze_polars_parquet_io_manager", group_name="carretwo")
 def bronze_carretwo_day_fct(context: dg.AssetExecutionContext) -> pl.LazyFrame:
-    df = pl.scan_parquet(DIRECTORY)
-    df = add_ingestion_metadata(
-        df=df,
-        data_source="uploader",
-        source_file="carretwo",
+    df = bronze_processing(
         context=context,
-        count_dates_in_col="date",
+        retailer_id=RETAILER_ID,
+        directory=DIRECTORY,
     )
     return df
 
@@ -39,7 +36,9 @@ def sensor_bronze_carretwo_day_fct(context: dg.SensorEvaluationContext):
 defs = dg.Definitions(
     assets=[bronze_carretwo_day_fct],
     resources={
-        "polars_parquet_io_manager": PolarsParquetIOManager(base_dir="data/bronze")
+        "bronze_polars_parquet_io_manager": PolarsDeltaIOManager(
+            base_dir="data/bronze", mode="append"
+        )
     },
     sensors=[sensor_bronze_carretwo_day_fct],
 )

@@ -4,18 +4,17 @@ requires-python = ">=3.9,<3.13"
 version = "0.1.0"
 dependencies = [
     "dagster-polars[deltalake]>=0.27.2",
-    "dagster==1.10.18",
+    "dagster>=1.10.18",
+    "patito>=0.8.3",
     "polars[deltalake]>=1.30.0",
 ]
-
-[project.entry-points]
-"dagster_dg_cli.plugin" = { dagster_demo = "dagster_demo.components"}
 
 [dependency-groups]
 dev = [
     "dagster-webserver",
     "dagster-dg-cli[local]",
     "faker>=37.3.0",
+    "ipykernel>=6.29.5",
 ]
 
 [build-system]
@@ -27,6 +26,7 @@ directory_type = "project"
 
 [tool.dg.project]
 root_module = "dagster_demo"
+autoload_defs = true
 
 
 [tool.dg.project.python_environment]

@@ -1,1 +1,1 @@
-LANDING_ZONE = 'data/landing'
+LANDING_ZONE = "data/landing"

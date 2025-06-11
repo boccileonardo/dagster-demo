@@ -1,5 +1,6 @@
 import dagster as dg
 import polars as pl
+import os
 from dagster_demo.defs.assets.carretwo import config as cfg
 from dagster_demo.components.ingestion import bronze_processing
 from dagster_demo.components.sensors import detect_new_files_in_dir
@@ -17,7 +18,7 @@ from dagster_demo.components.sensors import detect_new_files_in_dir
     kinds=["polars", "deltalake", "bronze"],
 )
 def bronze_carretwo_day_fct(context: dg.AssetExecutionContext) -> pl.LazyFrame:
-    df = pl.scan_parquet(cfg.DIRECTORY)
+    df = pl.scan_parquet(os.path.join(cfg.DIRECTORY))
     df = bronze_processing(
         context=context,
         df=df,
@@ -26,16 +27,22 @@ def bronze_carretwo_day_fct(context: dg.AssetExecutionContext) -> pl.LazyFrame:
     return df
 
 
+job = dg.define_asset_job(
+    name="bronze_carretwo_job",
+    selection=dg.AssetSelection.assets(bronze_carretwo_day_fct),
+)
+
+
 @dg.sensor(
-    minimum_interval_seconds=30,  # customize polling interval
+    minimum_interval_seconds=20,  # customize polling interval
     default_status=dg.DefaultSensorStatus.RUNNING,
-    asset_selection=f'key:"{bronze_carretwo_day_fct.key}"',
+    job=job,
 )
 def sensor_bronze_carretwo_day_fct(context: dg.SensorEvaluationContext):
     new_files = detect_new_files_in_dir(directory=cfg.DIRECTORY, context=context)
     if new_files:
-        for filename in new_files:
-            yield dg.RunRequest(run_key=str(filename))
+        context.log.info(f"Found new files: {new_files}. Triggering run...")
+        yield dg.RunRequest()
     else:
         yield dg.SkipReason("No new files found")
 

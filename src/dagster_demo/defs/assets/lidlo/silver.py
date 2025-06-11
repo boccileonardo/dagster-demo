@@ -21,10 +21,10 @@ from dagster_demo.components.refinement import (
     },
     kinds=["polars", "deltalake", "silver"],
 )
-def silver_lidlo_day_fct(
-    context: dg.AssetExecutionContext, bronze_lidlo_day_fct: pl.LazyFrame
+def lidlo_de_silver_day_fct(
+    context: dg.AssetExecutionContext, lidlo_de_bronze_day_fct: pl.LazyFrame
 ) -> pl.LazyFrame:
-    df = bronze_lidlo_day_fct.select(
+    df = lidlo_de_bronze_day_fct.select(
         pl.col("date").alias("time_period_end_date").str.to_date("%Y-%m-%d"),
         pl.col("store").alias("store_id"),
         pl.col("product").alias("prod_id"),
@@ -49,10 +49,10 @@ def silver_lidlo_day_fct(
     },
     kinds=["polars", "deltalake", "silver"],
 )
-def silver_lidlo_prod_dim(
-    context: dg.AssetExecutionContext, bronze_lidlo_day_fct: pl.LazyFrame
+def lidlo_de_silver_prod_dim(
+    context: dg.AssetExecutionContext, lidlo_de_bronze_day_fct: pl.LazyFrame
 ) -> pl.LazyFrame:
-    df = bronze_lidlo_day_fct.select(pl.col("product").alias("prod_id")).unique()
+    df = lidlo_de_bronze_day_fct.select(pl.col("product").alias("prod_id")).unique()
     df = silver_prod_dim_processing(context=context, df=df, config=cfg)
     return df
 
@@ -69,10 +69,10 @@ def silver_lidlo_prod_dim(
     },
     kinds=["polars", "deltalake", "silver"],
 )
-def silver_lidlo_site_dim(
-    context: dg.AssetExecutionContext, bronze_lidlo_day_fct: pl.LazyFrame
+def lidlo_de_silver_site_dim(
+    context: dg.AssetExecutionContext, lidlo_de_bronze_day_fct: pl.LazyFrame
 ) -> pl.LazyFrame:
-    df = bronze_lidlo_day_fct.select(pl.col("store").alias("site_id")).unique()
+    df = lidlo_de_bronze_day_fct.select(pl.col("store").alias("site_id")).unique()
     df = silver_site_dim_processing(context=context, df=df, config=cfg)
     return df
 
@@ -90,11 +90,11 @@ def silver_lidlo_site_dim(
     kinds=["polars", "deltalake", "silver"],
     tags={"aggregation": "day_to_week"},
 )
-def silver_lidlo_week_fct(
-    context: dg.AssetExecutionContext, silver_lidlo_day_fct: pl.LazyFrame
+def lidlo_de_silver_week_fct(
+    context: dg.AssetExecutionContext, lidlo_de_silver_day_fct: pl.LazyFrame
 ) -> pl.LazyFrame:
     df = silver_fct_downsample(
-        context=context, df=silver_lidlo_day_fct, sampling_period="1w", config=cfg
+        context=context, df=lidlo_de_silver_day_fct, sampling_period="1w", config=cfg
     )
     return df
 
@@ -112,21 +112,21 @@ def silver_lidlo_week_fct(
     kinds=["polars", "deltalake", "silver"],
     tags={"aggregation": "day_to_month"},
 )
-def silver_lidlo_month_fct(
-    context: dg.AssetExecutionContext, silver_lidlo_day_fct: pl.LazyFrame
+def lidlo_de_silver_month_fct(
+    context: dg.AssetExecutionContext, lidlo_de_silver_day_fct: pl.LazyFrame
 ) -> pl.LazyFrame:
     df = silver_fct_downsample(
-        context=context, df=silver_lidlo_day_fct, sampling_period="1mo", config=cfg
+        context=context, df=lidlo_de_silver_day_fct, sampling_period="1mo", config=cfg
     )
     return df
 
 
 defs = dg.Definitions(
     assets=[
-        silver_lidlo_day_fct,
-        silver_lidlo_prod_dim,
-        silver_lidlo_site_dim,
-        silver_lidlo_week_fct,
-        silver_lidlo_month_fct,
+        lidlo_de_silver_day_fct,
+        lidlo_de_silver_prod_dim,
+        lidlo_de_silver_site_dim,
+        lidlo_de_silver_week_fct,
+        lidlo_de_silver_month_fct,
     ],
 )

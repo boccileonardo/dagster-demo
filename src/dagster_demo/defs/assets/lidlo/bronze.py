@@ -17,7 +17,7 @@ from dagster_demo.components.sensors import detect_new_files_in_dir
     },
     kinds=["polars", "deltalake", "bronze"],
 )
-def bronze_lidlo_day_fct(context: dg.AssetExecutionContext) -> pl.LazyFrame:
+def lidlo_de_bronze_day_fct(context: dg.AssetExecutionContext) -> pl.LazyFrame:
     df = pl.scan_parquet(cfg.DIRECTORY)
     df = bronze_processing(
         context=context,
@@ -28,8 +28,8 @@ def bronze_lidlo_day_fct(context: dg.AssetExecutionContext) -> pl.LazyFrame:
 
 
 job = dg.define_asset_job(
-    name="bronze_lidlo_job",
-    selection=dg.AssetSelection.assets(bronze_lidlo_day_fct),
+    name="bronze_lidlo_de_job",
+    selection=dg.AssetSelection.assets(lidlo_de_bronze_day_fct),
 )
 
 
@@ -38,7 +38,7 @@ job = dg.define_asset_job(
     default_status=dg.DefaultSensorStatus.RUNNING,
     job=job,
 )
-def sensor_bronze_lidlo_day_fct(context: dg.SensorEvaluationContext):
+def sensor_lidlo_de_bronze_day_fct(context: dg.SensorEvaluationContext):
     new_files = detect_new_files_in_dir(directory=cfg.DIRECTORY, context=context)
     if new_files:
         logger.info(f"Found new files: {new_files}. Triggering run...")
@@ -48,6 +48,6 @@ def sensor_bronze_lidlo_day_fct(context: dg.SensorEvaluationContext):
 
 
 defs = dg.Definitions(
-    assets=[bronze_lidlo_day_fct],
-    sensors=[sensor_bronze_lidlo_day_fct],
+    assets=[lidlo_de_bronze_day_fct],
+    sensors=[sensor_lidlo_de_bronze_day_fct],
 )

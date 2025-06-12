@@ -10,6 +10,7 @@ Event-driven ETL of retailer point-of-sale data through Polars (small data), Pys
 
 - Retailer-level access is controlled by secure group keys via Unity catalog dynamic views.
 - Antitrust masking (only for competition data) is applied via dynamic views too, with a CASE .. WHEN logic that selects either the masked, or the real column depending on record age.
+#TODO: USE SODA OR GX TO RUN THE CHECKS
 
 Demo should include retailers that:
 - Send data via web UI/SFTP/Sharepoint to landing zone.

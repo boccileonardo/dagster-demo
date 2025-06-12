@@ -26,7 +26,7 @@ def lidlo_de_silver_day_fct(
 ) -> pl.LazyFrame:
     df = lidlo_de_bronze_day_fct.select(
         pl.col("date").alias("time_period_end_date").str.to_date("%Y-%m-%d"),
-        pl.col("store").alias("store_id"),
+        pl.col("store").alias("site_id"),
         pl.col("product").alias("prod_id"),
         pl.col("sales_qty").alias("pos_sales_units"),
         pl.col("sales_value_usd").alias("pos_sales_value"),

@@ -18,6 +18,7 @@ def silver_fct_processing(context: dg.AssetExecutionContext, df: pl.LazyFrame, c
 def silver_prod_dim_processing(
     context: dg.AssetExecutionContext, df: pl.LazyFrame, config
 ):
+    df = df.unique(subset=["prod_id"])
     # TODO: dagster asset checks, example join with corporate master data
     add_materialization_metadata(context=context, df=df)
     return df
@@ -26,6 +27,7 @@ def silver_prod_dim_processing(
 def silver_site_dim_processing(
     context: dg.AssetExecutionContext, df: pl.LazyFrame, config
 ):
+    df = df.unique(subset=["site_id"])
     # TODO: dagster asset checks, example join with corporate master data
     add_materialization_metadata(context=context, df=df)
     return df

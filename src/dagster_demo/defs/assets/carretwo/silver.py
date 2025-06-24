@@ -58,7 +58,7 @@ def carretwo_fr_silver_prod_dim(
         pl.col("created_at_utc_datetime"),
         pl.col("created_at_date"),
         pl.col("data_source"),
-    ).unique(subset=["prod_id"])
+    )
     df = silver_prod_dim_processing(context=context, df=df, config=cfg)
     return df
 
@@ -83,7 +83,7 @@ def carretwo_fr_silver_site_dim(
         pl.col("created_at_utc_datetime"),
         pl.col("created_at_date"),
         pl.col("data_source"),
-    ).unique(subset=["site_id"])
+    )
     df = silver_site_dim_processing(context=context, df=df, config=cfg)
     return df
 

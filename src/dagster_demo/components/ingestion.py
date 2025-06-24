@@ -24,8 +24,8 @@ def add_ingestion_metadata(
     """Add ingestion details before saving a df into a landing zone."""
     ingestion_datetime = dt.datetime.now(tz=dt.timezone.utc)
     df = df.with_columns(
-        ingested_at_utc_datetime=ingestion_datetime,
-        ingested_at_date=ingestion_datetime.date(),  # allows partitioning by lower cardinality
+        created_at_utc_datetime=ingestion_datetime,
+        created_at_date=ingestion_datetime.date(),  # allows partitioning by lower cardinality
         data_source=pl.lit(data_source),
     )
     logger.info(

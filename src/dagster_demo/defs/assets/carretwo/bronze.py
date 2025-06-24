@@ -15,7 +15,7 @@ from dagster_demo.components.sensors import detect_new_files_in_dir
         "region": cfg.REGION,
         "country": cfg.COUNTRY,
     },
-    kinds=["polars", "deltalake", "bronze"],
+    kinds={"polars", "deltalake", "bronze"},
 )
 def carretwo_fr_bronze_day_fct(context: dg.AssetExecutionContext) -> pl.LazyFrame:
     df = pl.scan_parquet(os.path.join(cfg.DIRECTORY))

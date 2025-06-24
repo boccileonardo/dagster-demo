@@ -1,3 +1,5 @@
+# EXAMPLE DATA: faker/data/daily_files
+
 from dagster_demo.components.constants import LANDING_ZONE, RETAILER_CONFIG
 
 # MANUAL INPUT

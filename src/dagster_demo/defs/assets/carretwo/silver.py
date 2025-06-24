@@ -19,7 +19,7 @@ from dagster_demo.components.refinement import (
         "region": cfg.REGION,
         "country": cfg.COUNTRY,
     },
-    kinds=["polars", "deltalake", "silver"],
+    kinds={"polars", "deltalake", "silver"},
 )
 def carretwo_fr_silver_day_fct(
     context: dg.AssetExecutionContext, carretwo_fr_bronze_day_fct: pl.LazyFrame
@@ -47,7 +47,7 @@ def carretwo_fr_silver_day_fct(
         "region": cfg.REGION,
         "country": cfg.COUNTRY,
     },
-    kinds=["polars", "deltalake", "silver"],
+    kinds={"polars", "deltalake", "silver"},
 )
 def carretwo_fr_silver_prod_dim(
     context: dg.AssetExecutionContext, carretwo_fr_bronze_day_fct: pl.LazyFrame
@@ -67,7 +67,7 @@ def carretwo_fr_silver_prod_dim(
         "region": cfg.REGION,
         "country": cfg.COUNTRY,
     },
-    kinds=["polars", "deltalake", "silver"],
+    kinds={"polars", "deltalake", "silver"},
 )
 def carretwo_fr_silver_site_dim(
     context: dg.AssetExecutionContext, carretwo_fr_bronze_day_fct: pl.LazyFrame
@@ -87,7 +87,7 @@ def carretwo_fr_silver_site_dim(
         "region": cfg.REGION,
         "country": cfg.COUNTRY,
     },
-    kinds=["polars", "deltalake", "silver"],
+    kinds={"polars", "deltalake", "silver"},
     tags={"aggregation": "day_to_week"},
 )
 def carretwo_fr_silver_week_fct(
@@ -109,7 +109,7 @@ def carretwo_fr_silver_week_fct(
         "region": cfg.REGION,
         "country": cfg.COUNTRY,
     },
-    kinds=["polars", "deltalake", "silver"],
+    kinds={"polars", "deltalake", "silver"},
     tags={"aggregation": "day_to_month"},
 )
 def carretwo_fr_silver_month_fct(

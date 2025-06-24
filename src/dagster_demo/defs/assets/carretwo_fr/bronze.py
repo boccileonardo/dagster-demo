@@ -1,7 +1,7 @@
 import dagster as dg
 import polars as pl
-from dagster_demo.components.logger import logger
-from dagster_demo.defs.assets.lidlo import config as cfg
+import os
+from dagster_demo.defs.assets.carretwo_fr import config as cfg
 from dagster_demo.components.ingestion import bronze_processing
 from dagster_demo.components.sensors import detect_new_files_in_dir
 
@@ -17,8 +17,8 @@ from dagster_demo.components.sensors import detect_new_files_in_dir
     },
     kinds={"polars", "deltalake", "bronze"},
 )
-def lidlo_de_bronze_day_fct(context: dg.AssetExecutionContext) -> pl.LazyFrame:
-    df = pl.scan_parquet(cfg.DIRECTORY)
+def carretwo_fr_bronze_day_fct(context: dg.AssetExecutionContext) -> pl.LazyFrame:
+    df = pl.scan_parquet(os.path.join(cfg.DIRECTORY))
     df = bronze_processing(
         context=context,
         df=df,
@@ -28,8 +28,8 @@ def lidlo_de_bronze_day_fct(context: dg.AssetExecutionContext) -> pl.LazyFrame:
 
 
 job = dg.define_asset_job(
-    name="bronze_lidlo_de_job",
-    selection=dg.AssetSelection.assets(lidlo_de_bronze_day_fct),
+    name="bronze_carretwo_fr_job",
+    selection=dg.AssetSelection.assets(carretwo_fr_bronze_day_fct),
 )
 
 
@@ -38,16 +38,16 @@ job = dg.define_asset_job(
     default_status=dg.DefaultSensorStatus.RUNNING,
     job=job,
 )
-def sensor_lidlo_de_bronze_day_fct(context: dg.SensorEvaluationContext):
+def sensor_carretwo_fr_bronze_day_fct(context: dg.SensorEvaluationContext):
     new_files = detect_new_files_in_dir(directory=cfg.DIRECTORY, context=context)
     if new_files:
-        logger.info(f"Found new files: {new_files}. Triggering run...")
+        context.log.info(f"Found new files: {new_files}. Triggering run...")
         yield dg.RunRequest()
     else:
         yield dg.SkipReason("No new files found")
 
 
 defs = dg.Definitions(
-    assets=[lidlo_de_bronze_day_fct],
-    sensors=[sensor_lidlo_de_bronze_day_fct],
+    assets=[carretwo_fr_bronze_day_fct],
+    sensors=[sensor_carretwo_fr_bronze_day_fct],
 )

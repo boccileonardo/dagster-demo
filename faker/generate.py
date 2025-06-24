@@ -327,6 +327,36 @@ def weekly_files_all_days(file_format="parquet"):
             )
 
 
+def fake_corporate_product_master_data():
+    all_products = (
+        pl.scan_parquet("faker/data/daily_files/*").select("product").unique()
+    )
+    sampled_products = all_products.collect(engine="streaming").sample(fraction=0.3)
+    sampled_products = sampled_products.with_columns(
+        pl.col("product").alias("prod_id"),
+        pl.col("product").alias("prod_name"),
+        pl.lit(random_sector()).alias("sector"),
+        pl.lit(random_subcategory()).alias("subcategory"),
+        pl.lit(random_gtin()).alias("gtin"),
+    )
+    sampled_products.write_parquet("faker/data/corporate_product_master_data.parquet")
+
+
+def fake_corporate_site_master_data():
+    all_sites = pl.scan_parquet("faker/data/daily_files/*").select("store").unique()
+    sampled_sites = all_sites.collect(engine="streaming").sample(fraction=0.3)
+    sampled_sites = sampled_sites.with_columns(
+        pl.col("store").alias("site_id"),
+        pl.col("store").alias("site_name"),
+        pl.lit(random_address()).alias("address"),
+        pl.lit(random_channel()).alias("channel"),
+        pl.lit(random_lat()).alias("latitude"),
+        pl.lit(random_lon()).alias("longitude"),
+        pl.lit(random_location_number()).alias("global_location_number"),
+    )
+    sampled_sites.write_parquet("faker/data/corporate_site_master_data.parquet")
+
+
 if __name__ == "__main__":
     one_big_table("json")
     separate_dim_fact("csv")
@@ -335,3 +365,5 @@ if __name__ == "__main__":
     daily_files()
     weekly_files_single_date()
     weekly_files_all_days()
+    fake_corporate_product_master_data()
+    fake_corporate_site_master_data()

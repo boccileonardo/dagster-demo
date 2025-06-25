@@ -12,6 +12,7 @@ Event-driven ETL of retailer point-of-sale data through Polars (small data), Pys
 - Antitrust masking (only for competition data) is applied via dynamic views too, with a CASE .. WHEN logic that selects either the masked, or the real column depending on record age.
 
 #TODO: Use a data quality library to run dq checks in silver
+#TODO: think about partition inheritance at gold layer from previously partitioned assets
 
 Demo should include retailers that:
 - Send data via web UI/SFTP/Sharepoint to landing zone.

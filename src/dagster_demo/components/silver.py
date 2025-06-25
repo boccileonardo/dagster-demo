@@ -3,7 +3,7 @@ import polars.selectors as cs
 import dagster as dg
 from typing import Literal
 from dagster_demo.components.output_metadata import add_materialization_metadata
-from dagster_demo.components.ingestion import add_ingestion_metadata
+from dagster_demo.components.bronze import add_ingestion_metadata
 
 
 def load_product_master_data():

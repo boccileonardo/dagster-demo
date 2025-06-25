@@ -1,7 +1,7 @@
 import dagster as dg
 import polars as pl
 from dagster_demo.defs.assets.lidlo_de import config as cfg
-from dagster_demo.components.refinement import (
+from dagster_demo.components.silver import (
     silver_fct_processing,
     silver_prod_dim_processing,
     silver_site_dim_processing,

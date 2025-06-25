@@ -9,5 +9,8 @@ defs = dg.Definitions(
         "silver_polars_parquet_io_manager": PolarsDeltaIOManager(
             base_dir="data/silver", mode=DeltaWriteMode.overwrite
         ),
+        "gold_polars_parquet_io_manager": PolarsDeltaIOManager(
+            base_dir="data/gold", mode=DeltaWriteMode.overwrite
+        ),
     },
 )

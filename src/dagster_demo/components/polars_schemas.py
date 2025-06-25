@@ -1,27 +1,27 @@
 import polars as pl
 
-prod_dim_pl_schema = {
-    "prod_id": pl.String,
+prod_dim_pl_schema: dict[str, pl.DataType] = {
+    "prod_id": pl.String(),
     "created_at_utc_datetime": pl.Datetime(time_unit="us", time_zone="UTC"),
-    "created_at_date": pl.Date,
-    "data_source": pl.String,
+    "created_at_date": pl.Date(),
+    "data_source": pl.String(),
 }
 
 
-site_dim_pl_schema = {
-    "site_id": pl.String,
+site_dim_pl_schema: dict[str, pl.DataType] = {
+    "site_id": pl.String(),
     "created_at_utc_datetime": pl.Datetime(time_unit="us", time_zone="UTC"),
-    "created_at_date": pl.Date,
-    "data_source": pl.String,
+    "created_at_date": pl.Date(),
+    "data_source": pl.String(),
 }
 
-store_fact_pl_schema = {
-    "time_period_end_date": pl.Date,
-    "prod_id": pl.String,
-    "site_id": pl.String,
+store_fact_pl_schema: dict[str, pl.DataType] = {
+    "time_period_end_date": pl.Date(),
+    "prod_id": pl.String(),
+    "site_id": pl.String(),
     "created_at_utc_datetime": pl.Datetime(time_unit="us", time_zone="UTC"),
-    "created_at_date": pl.Date,
-    "data_source": pl.String,
+    "created_at_date": pl.Date(),
+    "data_source": pl.String(),
 }
 
 

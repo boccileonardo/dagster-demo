@@ -20,7 +20,7 @@ from dagster_demo.components.silver import (
         "country": cfg.COUNTRY,
     },
     kinds={"polars", "deltalake", "silver"},
-)
+)  # type: ignore[call-overload]
 def carretwo_fr_silver_day_fct(
     context: dg.AssetExecutionContext, carretwo_fr_bronze_day_fct: pl.LazyFrame
 ) -> pl.LazyFrame:
@@ -34,7 +34,7 @@ def carretwo_fr_silver_day_fct(
         pl.col("created_at_date"),
         pl.col("data_source"),
     )
-    df = silver_fct_processing(context=context, df=df, config=cfg)
+    df = silver_fct_processing(context=context, df=df)
     return df
 
 
@@ -49,7 +49,7 @@ def carretwo_fr_silver_day_fct(
         "country": cfg.COUNTRY,
     },
     kinds={"polars", "deltalake", "silver"},
-)
+)  # type: ignore[call-overload]
 def carretwo_fr_silver_prod_dim(
     context: dg.AssetExecutionContext, carretwo_fr_bronze_day_fct: pl.LazyFrame
 ) -> pl.LazyFrame:
@@ -59,7 +59,7 @@ def carretwo_fr_silver_prod_dim(
         pl.col("created_at_date"),
         pl.col("data_source"),
     )
-    df = silver_prod_dim_processing(context=context, df=df, config=cfg)
+    df = silver_prod_dim_processing(context=context, df=df)
     return df
 
 
@@ -74,7 +74,7 @@ def carretwo_fr_silver_prod_dim(
         "country": cfg.COUNTRY,
     },
     kinds={"polars", "deltalake", "silver"},
-)
+)  # type: ignore[call-overload]
 def carretwo_fr_silver_site_dim(
     context: dg.AssetExecutionContext, carretwo_fr_bronze_day_fct: pl.LazyFrame
 ) -> pl.LazyFrame:
@@ -84,7 +84,7 @@ def carretwo_fr_silver_site_dim(
         pl.col("created_at_date"),
         pl.col("data_source"),
     )
-    df = silver_site_dim_processing(context=context, df=df, config=cfg)
+    df = silver_site_dim_processing(context=context, df=df)
     return df
 
 
@@ -100,7 +100,7 @@ def carretwo_fr_silver_site_dim(
     },
     kinds={"polars", "deltalake", "silver"},
     tags={"aggregation": "day_to_week"},
-)
+)  # type: ignore[call-overload]
 def carretwo_fr_silver_week_fct(
     context: dg.AssetExecutionContext, carretwo_fr_silver_day_fct: pl.LazyFrame
 ) -> pl.LazyFrame:
@@ -122,7 +122,7 @@ def carretwo_fr_silver_week_fct(
     },
     kinds={"polars", "deltalake", "silver"},
     tags={"aggregation": "day_to_month"},
-)
+)  # type: ignore[call-overload]
 def carretwo_fr_silver_month_fct(
     context: dg.AssetExecutionContext, carretwo_fr_silver_day_fct: pl.LazyFrame
 ) -> pl.LazyFrame:

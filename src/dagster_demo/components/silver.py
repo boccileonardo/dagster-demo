@@ -28,18 +28,15 @@ def load_site_master_data():
     )
 
 
-def silver_fct_processing(context: dg.AssetExecutionContext, df: pl.LazyFrame, config):
+def silver_fct_processing(context: dg.AssetExecutionContext, df: pl.LazyFrame):
     df = df.unique()  # deduplication of bronze data
-    # TODO: dagster asset checks
     add_materialization_metadata(
         context=context, df=df, count_dates_in_col="time_period_end_date"
     )
     return df
 
 
-def silver_prod_dim_processing(
-    context: dg.AssetExecutionContext, df: pl.LazyFrame, config
-):
+def silver_prod_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFrame):
     df = df.unique(subset=["prod_id"])
     master = load_product_master_data()
     df = df.join(
@@ -52,9 +49,7 @@ def silver_prod_dim_processing(
     return df
 
 
-def silver_site_dim_processing(
-    context: dg.AssetExecutionContext, df: pl.LazyFrame, config
-):
+def silver_site_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFrame):
     df = df.unique(subset=["site_id"])
     master = load_site_master_data()
     df = df.join(

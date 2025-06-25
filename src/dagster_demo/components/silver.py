@@ -10,7 +10,7 @@ def load_product_master_data():
     df = pl.scan_parquet("faker/data/corporate_product_master_data.parquet")
     col_names = df.collect_schema().names()
     prefixed_col_names = [
-        f"corp_{col}" if col != "prod_id" else col for col in col_names
+        f"corp_{col}" if col != "item_gtin" else col for col in col_names
     ]
     return df.rename(
         {col: new_col for col, new_col in zip(col_names, prefixed_col_names)}
@@ -21,7 +21,7 @@ def load_site_master_data():
     df = pl.scan_parquet("faker/data/corporate_site_master_data.parquet")
     col_names = df.collect_schema().names()
     prefixed_col_names = [
-        f"corp_{col}" if col != "site_id" else col for col in col_names
+        f"corp_{col}" if col != "global_location_number" else col for col in col_names
     ]
     return df.rename(
         {col: new_col for col, new_col in zip(col_names, prefixed_col_names)}
@@ -42,7 +42,7 @@ def silver_prod_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFra
     df = df.join(
         master,
         left_on="prod_id",
-        right_on="prod_id",
+        right_on="item_gtin",
         how="left",
     )
     add_materialization_metadata(context=context, df=df)
@@ -55,7 +55,7 @@ def silver_site_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFra
     df = df.join(
         master,
         left_on="site_id",
-        right_on="site_id",
+        right_on="global_location_number",
         how="left",
     )
     add_materialization_metadata(context=context, df=df)

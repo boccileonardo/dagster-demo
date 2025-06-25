@@ -29,7 +29,7 @@ def carretwo_fr_silver_day_fct(
         pl.col("product").alias("prod_id"),
         pl.col("store").alias("site_id"),
         pl.col("sales_qty").alias("pos_sales_units"),
-        pl.col("sales_value_usd").alias("pos_sales_value"),
+        pl.col("sales_value_usd").alias("pos_sales_value_usd"),
         pl.col("created_at_utc_datetime"),
         pl.col("created_at_date"),
         pl.col("data_source"),

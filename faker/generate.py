@@ -68,7 +68,7 @@ def random_address():
 
 def random_date(start_year=2024, end_year=2025):
     return fake.date_between(
-        start_date=f"{start_year}-01-01", end_date=f"{end_year}-06-01"
+        start_date=datetime(start_year, 1, 1), end_date=datetime(end_year, 6, 1)
     )
 
 
@@ -150,7 +150,7 @@ def generate_product(name, partial=False):
                 "sector": random_sector(),
                 "launch_date": str(random_date()),
                 "GTIN": random_gtin(),
-                "description": fake.catch_phrase_verb(),
+                "description": fake.catch_phrase(),
             }
         )
     else:
@@ -221,10 +221,10 @@ def separate_dim_fact(file_format="parquet"):
     out_dir = os.path.join(DATA_DIR, "separate_dim_fact")
     os.makedirs(out_dir, exist_ok=True)
     df_products = pl.DataFrame(
-        [generate_product(name=product, partial=True) for product in PRODUCTS]
+        [generate_product(name=product, partial=False) for product in PRODUCTS]
     )
     df_stores = pl.DataFrame(
-        [generate_store(name=store, partial=True) for store in STORES]
+        [generate_store(name=store, partial=False) for store in STORES]
     )
     products_in_dim = df_products.select("id").unique().to_series().to_list()
     stores_in_dim = df_products.select("id").unique().to_series().to_list()
@@ -329,30 +329,36 @@ def weekly_files_all_days(file_format="parquet"):
 
 def fake_corporate_product_master_data():
     all_products = (
-        pl.scan_parquet("faker/data/daily_files/*").select("product").unique()
+        pl.scan_csv("faker/data/separate_dim_fact/dim_products.csv")
+        .select("GTIN")
+        .unique()
     )
     sampled_products = all_products.collect(engine="streaming").sample(fraction=0.3)
-    sampled_products = sampled_products.with_columns(
-        pl.col("product").alias("prod_id"),
-        pl.col("product").alias("prod_name"),
+    sampled_products = sampled_products.select(
+        pl.col("GTIN").alias("item_gtin"),
+        pl.col("GTIN").alias("prod_name"),
         pl.lit(random_sector()).alias("sector"),
+        pl.lit(random_sector()).alias("category"),
         pl.lit(random_subcategory()).alias("subcategory"),
-        pl.lit(random_gtin()).alias("gtin"),
+        pl.lit(random_subcategory()).alias("item_description"),
     )
     sampled_products.write_parquet("faker/data/corporate_product_master_data.parquet")
 
 
 def fake_corporate_site_master_data():
-    all_sites = pl.scan_parquet("faker/data/daily_files/*").select("store").unique()
+    all_sites = (
+        pl.scan_csv("faker/data/separate_dim_fact/dim_stores.csv")
+        .select("global_location_number")
+        .unique()
+    )
     sampled_sites = all_sites.collect(engine="streaming").sample(fraction=0.3)
-    sampled_sites = sampled_sites.with_columns(
-        pl.col("store").alias("site_id"),
-        pl.col("store").alias("site_name"),
+    sampled_sites = sampled_sites.select(
+        pl.col("global_location_number"),
+        pl.col("global_location_number").alias("site_name"),
         pl.lit(random_address()).alias("address"),
         pl.lit(random_channel()).alias("channel"),
         pl.lit(random_lat()).alias("latitude"),
         pl.lit(random_lon()).alias("longitude"),
-        pl.lit(random_location_number()).alias("global_location_number"),
     )
     sampled_sites.write_parquet("faker/data/corporate_site_master_data.parquet")
 

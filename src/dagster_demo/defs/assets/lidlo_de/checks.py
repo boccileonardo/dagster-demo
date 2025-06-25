@@ -2,8 +2,11 @@ import dagster as dg
 import polars as pl
 from dagster_demo.components.polars_schemas import (
     store_fact_pl_schema,
+    store_fact_required_cols,
     site_dim_pl_schema,
+    site_dim_required_cols,
     prod_dim_pl_schema,
+    prod_dim_required_cols,
     check_polars_schema,
 )
 from dagster_demo.defs.assets.lidlo_de.silver import (
@@ -27,6 +30,7 @@ def silver_prod_dim_schema_check(
     check_results = check_polars_schema(
         df_schema=lidlo_de_silver_prod_dim.collect_schema(),
         expected_schema=prod_dim_pl_schema,
+        required_cols_list=prod_dim_required_cols,
     )
     return dg.AssetCheckResult(passed=check_results["passed"], metadata=check_results)
 
@@ -43,6 +47,7 @@ def silver_site_dim_schema_check(
     check_results = check_polars_schema(
         df_schema=lidlo_de_silver_site_dim.collect_schema(),
         expected_schema=site_dim_pl_schema,
+        required_cols_list=site_dim_required_cols,
     )
     return dg.AssetCheckResult(passed=check_results["passed"], metadata=check_results)
 
@@ -59,6 +64,7 @@ def silver_day_fct_schema_check(
     check_results = check_polars_schema(
         df_schema=lidlo_de_silver_day_fct.collect_schema(),
         expected_schema=store_fact_pl_schema,
+        required_cols_list=store_fact_required_cols,
     )
     return dg.AssetCheckResult(passed=check_results["passed"], metadata=check_results)
 
@@ -75,6 +81,7 @@ def silver_week_fct_schema_check(
     check_results = check_polars_schema(
         df_schema=lidlo_de_silver_week_fct.collect_schema(),
         expected_schema=store_fact_pl_schema,
+        required_cols_list=store_fact_required_cols,
     )
     return dg.AssetCheckResult(passed=check_results["passed"], metadata=check_results)
 
@@ -91,5 +98,6 @@ def silver_month_fct_schema_check(
     check_results = check_polars_schema(
         df_schema=lidlo_de_silver_month_fct.collect_schema(),
         expected_schema=store_fact_pl_schema,
+        required_cols_list=store_fact_required_cols,
     )
     return dg.AssetCheckResult(passed=check_results["passed"], metadata=check_results)

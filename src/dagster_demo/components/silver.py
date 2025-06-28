@@ -4,17 +4,25 @@ import dagster as dg
 from typing import Literal
 from dagster_demo.components.output_metadata import add_materialization_metadata
 from dagster_demo.components.bronze import add_ingestion_metadata
-from dagster_demo.components.polars_schemas import prod_dim_required_cols, site_dim_required_cols, store_fact_required_cols
+from dagster_demo.components.polars_schemas import (
+    prod_dim_required_cols,
+    site_dim_required_cols,
+    store_fact_required_cols,
+)
+
 
 def prefix_cols(df: pl.LazyFrame, prefix: str):
     col_names = df.collect_schema().names()
-    technical_columns = set(prod_dim_required_cols + site_dim_required_cols + store_fact_required_cols)
+    technical_columns = set(
+        prod_dim_required_cols + site_dim_required_cols + store_fact_required_cols
+    )
     prefixed_col_names = [
         f"{prefix}_{col}" if col not in technical_columns else col for col in col_names
     ]
     return df.rename(
         {col: new_col for col, new_col in zip(col_names, prefixed_col_names)}
     )
+
 
 def load_product_master_data():
     df = pl.scan_parquet("faker/data/corporate_product_master_data.parquet")
@@ -33,10 +41,11 @@ def silver_fct_processing(context: dg.AssetExecutionContext, df: pl.LazyFrame):
     )
     return df
 
+
 def silver_prod_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFrame):
     df = df.unique(subset=["prod_id"])
     df = prefix_cols(df, "source")
-    if 'source_item_gtin' in df.collect_schema().names():
+    if "source_item_gtin" in df.collect_schema().names():
         master = load_product_master_data()
         df = df.join(
             master,
@@ -51,7 +60,7 @@ def silver_prod_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFra
 def silver_site_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFrame):
     df = df.unique(subset=["site_id"])
     df = prefix_cols(df, "source")
-    if 'source_global_location_number' in df.collect_schema().names():
+    if "source_global_location_number" in df.collect_schema().names():
         master = load_site_master_data()
         df = df.join(
             master,

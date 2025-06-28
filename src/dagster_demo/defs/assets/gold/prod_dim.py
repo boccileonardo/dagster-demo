@@ -6,6 +6,7 @@ from dagster_demo.components.polars_schemas import (
     check_polars_schema,
 )
 
+
 @dg.asset(
     io_manager_key="gold_polars_parquet_io_manager",
     automation_condition=dg.AutomationCondition.eager(),
@@ -20,6 +21,7 @@ def gold_store_prod_dim(
     """Union silver assets and partition by retailer."""
     df = gold_prod_dim(context, [lidlo_de_silver_prod_dim, carretwo_fr_silver_prod_dim])
     return df
+
 
 @dg.asset_check(asset=gold_store_prod_dim, blocking=True)
 def gold_prod_dim_schema_check(

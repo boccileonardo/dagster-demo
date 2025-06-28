@@ -1,4 +1,5 @@
 import polars as pl
+from typing import Iterable
 
 prod_dim_pl_schema: dict[str, pl.DataType] = {
     # Required columns
@@ -96,7 +97,7 @@ store_fact_required_cols: list[str] = [
 
 
 def check_polars_schema(
-    df_schema: pl.Schema, expected_schema: dict, required_cols_list: list
+    df_schema: pl.Schema, expected_schema: dict, required_cols_list: Iterable[str]
 ):
     """Check whether a polars lazyframe's schema matches expectations.
     `Passed` = True if there are no mandatory column missing and no type mismatches against expectations and no unexpected columns.

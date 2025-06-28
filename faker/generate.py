@@ -255,8 +255,12 @@ def single_file_many_dates(file_format="parquet"):
     out_dir = os.path.join(DATA_DIR, "single_file_many_dates")
     os.makedirs(out_dir, exist_ok=True)
     # Load dimension tables
-    df_products = pl.DataFrame([generate_product(name=product, partial=False) for product in PRODUCTS]).with_row_index("product_id")
-    df_stores = pl.DataFrame([generate_store(name=store, partial=False) for store in STORES]).with_row_index("store_id")
+    df_products = pl.DataFrame(
+        [generate_product(name=product, partial=False) for product in PRODUCTS]
+    ).with_row_index("product_id")
+    df_stores = pl.DataFrame(
+        [generate_store(name=store, partial=False) for store in STORES]
+    ).with_row_index("store_id")
     product_name_to_id = dict(zip(df_products["product"], df_products["product_id"]))
     store_name_to_id = dict(zip(df_stores["store"], df_stores["store_id"]))
     records = []
@@ -274,8 +278,12 @@ def single_file_many_dates(file_format="parquet"):
 def files_per_store(file_format="parquet"):
     out_dir = os.path.join(DATA_DIR, "files_per_store")
     os.makedirs(out_dir, exist_ok=True)
-    df_products = pl.DataFrame([generate_product(name=product, partial=False) for product in PRODUCTS]).with_row_index("product_id")
-    df_stores = pl.DataFrame([generate_store(name=store, partial=False) for store in STORES]).with_row_index("store_id")
+    df_products = pl.DataFrame(
+        [generate_product(name=product, partial=False) for product in PRODUCTS]
+    ).with_row_index("product_id")
+    df_stores = pl.DataFrame(
+        [generate_store(name=store, partial=False) for store in STORES]
+    ).with_row_index("store_id")
     product_name_to_id = dict(zip(df_products["product"], df_products["product_id"]))
     store_name_to_id = dict(zip(df_stores["store"], df_stores["store_id"]))
     for store in STORES:
@@ -293,8 +301,12 @@ def files_per_store(file_format="parquet"):
 def daily_files(file_format="parquet"):
     out_dir = os.path.join(DATA_DIR, "daily_files")
     os.makedirs(out_dir, exist_ok=True)
-    df_products = pl.DataFrame([generate_product(name=product, partial=False) for product in PRODUCTS]).with_row_index("product_id")
-    df_stores = pl.DataFrame([generate_store(name=store, partial=False) for store in STORES]).with_row_index("store_id")
+    df_products = pl.DataFrame(
+        [generate_product(name=product, partial=False) for product in PRODUCTS]
+    ).with_row_index("product_id")
+    df_stores = pl.DataFrame(
+        [generate_store(name=store, partial=False) for store in STORES]
+    ).with_row_index("store_id")
     product_name_to_id = dict(zip(df_products["product"], df_products["product_id"]))
     store_name_to_id = dict(zip(df_stores["store"], df_stores["store_id"]))
     for date in DATES:
@@ -314,8 +326,12 @@ def daily_files(file_format="parquet"):
 def weekly_files_single_date(file_format="parquet"):
     out_dir = os.path.join(DATA_DIR, "weekly_files_single_date")
     os.makedirs(out_dir, exist_ok=True)
-    df_products = pl.DataFrame([generate_product(name=product, partial=False) for product in PRODUCTS]).with_row_index("product_id")
-    df_stores = pl.DataFrame([generate_store(name=store, partial=False) for store in STORES]).with_row_index("store_id")
+    df_products = pl.DataFrame(
+        [generate_product(name=product, partial=False) for product in PRODUCTS]
+    ).with_row_index("product_id")
+    df_stores = pl.DataFrame(
+        [generate_store(name=store, partial=False) for store in STORES]
+    ).with_row_index("store_id")
     product_name_to_id = dict(zip(df_products["product"], df_products["product_id"]))
     store_name_to_id = dict(zip(df_stores["store"], df_stores["store_id"]))
     for i in range(0, len(DATES), 7):
@@ -339,8 +355,12 @@ def weekly_files_single_date(file_format="parquet"):
 def weekly_files_all_days(file_format="parquet"):
     out_dir = os.path.join(DATA_DIR, "weekly_files_all_days")
     os.makedirs(out_dir, exist_ok=True)
-    df_products = pl.DataFrame([generate_product(name=product, partial=False) for product in PRODUCTS]).with_row_index("product_id")
-    df_stores = pl.DataFrame([generate_store(name=store, partial=False) for store in STORES]).with_row_index("store_id")
+    df_products = pl.DataFrame(
+        [generate_product(name=product, partial=False) for product in PRODUCTS]
+    ).with_row_index("product_id")
+    df_stores = pl.DataFrame(
+        [generate_store(name=store, partial=False) for store in STORES]
+    ).with_row_index("store_id")
     product_name_to_id = dict(zip(df_products["product"], df_products["product_id"]))
     store_name_to_id = dict(zip(df_stores["store"], df_stores["store_id"]))
     for i in range(0, len(DATES), 7):

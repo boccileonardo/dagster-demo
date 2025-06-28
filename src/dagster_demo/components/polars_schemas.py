@@ -67,8 +67,8 @@ site_dim_required_cols: list[str] = [
 store_fact_pl_schema: dict[str, pl.DataType] = {
     # Required columns
     "time_period_end_date": pl.Date(),
-    "prod_id": pl.String(),
-    "site_id": pl.String(),
+    "prod_id": pl.Int64(),
+    "site_id": pl.Int64(),
     "created_at_utc_datetime": pl.Datetime(time_unit="us", time_zone="UTC"),
     "created_at_date": pl.Date(),
     "data_source": pl.String(),

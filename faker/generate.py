@@ -140,7 +140,7 @@ def generate_inventory_record(date, store, product, partial=False):
 # --- Dimension generators ---
 def generate_product(name, partial=False):
     base = {
-        "id": random.randint(1000, 9999),
+        # 'id' will be assigned later with with_row_index
         "product": name,
         "category": random_subcategory(),
     }
@@ -163,7 +163,11 @@ def generate_product(name, partial=False):
 
 
 def generate_store(name, partial=False):
-    base = {"id": random.randint(1000, 9999), "store": name, "city": fake.city()}
+    base = {
+        # 'id' will be assigned later with with_row_index
+        "store": name,
+        "city": fake.city(),
+    }
     if not partial:
         base.update(
             {
@@ -222,18 +226,24 @@ def separate_dim_fact(file_format="parquet"):
     os.makedirs(out_dir, exist_ok=True)
     df_products = pl.DataFrame(
         [generate_product(name=product, partial=False) for product in PRODUCTS]
-    )
+    ).with_row_index("id")
     df_stores = pl.DataFrame(
         [generate_store(name=store, partial=False) for store in STORES]
-    )
-    products_in_dim = df_products.select("id").unique().to_series().to_list()
-    stores_in_dim = df_products.select("id").unique().to_series().to_list()
+    ).with_row_index("id")
+    products_in_dim = df_products["id"].to_list()
+    stores_in_dim = df_stores["id"].to_list()
+    product_name_map = dict(zip(df_products["id"], df_products["product"]))
+    store_name_map = dict(zip(df_stores["id"], df_stores["store"]))
     records = [
-        generate_sales_record(date, store, product, partial=True)
+        generate_sales_record(date, store_id, product_id, partial=True)
         for date in DATES
-        for store in stores_in_dim
-        for product in products_in_dim
+        for store_id in stores_in_dim
+        for product_id in products_in_dim
     ]
+    # Add product/store names to fact table for clarity
+    for rec in records:
+        rec["product_name"] = product_name_map[rec["product"]]
+        rec["store_name"] = store_name_map[rec["store"]]
     df_fact = pl.DataFrame(records)
 
     write_df(df_products, f"{out_dir}/dim_products.{file_format}", file_format)
@@ -244,27 +254,38 @@ def separate_dim_fact(file_format="parquet"):
 def single_file_many_dates(file_format="parquet"):
     out_dir = os.path.join(DATA_DIR, "single_file_many_dates")
     os.makedirs(out_dir, exist_ok=True)
-    records = [
-        generate_sales_record(date, store, product, partial=False)
-        for date in DATES
-        for store in STORES
-        for product in PRODUCTS
-    ]
+    # Load dimension tables
+    df_products = pl.DataFrame([generate_product(name=product, partial=False) for product in PRODUCTS]).with_row_index("product_id")
+    df_stores = pl.DataFrame([generate_store(name=store, partial=False) for store in STORES]).with_row_index("store_id")
+    product_name_to_id = dict(zip(df_products["product"], df_products["product_id"]))
+    store_name_to_id = dict(zip(df_stores["store"], df_stores["store_id"]))
+    records = []
+    for date in DATES:
+        for store in STORES:
+            for product in PRODUCTS:
+                rec = generate_sales_record(date, store, product, partial=False)
+                rec["product_id"] = product_name_to_id[product]
+                rec["store_id"] = store_name_to_id[store]
+                records.append(rec)
     df = pl.DataFrame(records)
-
     write_df(df, f"{out_dir}/all_dates.{file_format}", file_format)
 
 
 def files_per_store(file_format="parquet"):
     out_dir = os.path.join(DATA_DIR, "files_per_store")
     os.makedirs(out_dir, exist_ok=True)
-
+    df_products = pl.DataFrame([generate_product(name=product, partial=False) for product in PRODUCTS]).with_row_index("product_id")
+    df_stores = pl.DataFrame([generate_store(name=store, partial=False) for store in STORES]).with_row_index("store_id")
+    product_name_to_id = dict(zip(df_products["product"], df_products["product_id"]))
+    store_name_to_id = dict(zip(df_stores["store"], df_stores["store_id"]))
     for store in STORES:
-        records = [
-            generate_inventory_record(date, store, product, partial=False)
-            for date in DATES
-            for product in PRODUCTS
-        ]
+        records = []
+        for date in DATES:
+            for product in PRODUCTS:
+                rec = generate_inventory_record(date, store, product, partial=False)
+                rec["product_id"] = product_name_to_id[product]
+                rec["store_id"] = store_name_to_id[store]
+                records.append(rec)
         df = pl.DataFrame(records)
         write_df(df, f"{out_dir}/sales_{store}.{file_format}", file_format)
 
@@ -272,13 +293,18 @@ def files_per_store(file_format="parquet"):
 def daily_files(file_format="parquet"):
     out_dir = os.path.join(DATA_DIR, "daily_files")
     os.makedirs(out_dir, exist_ok=True)
-
+    df_products = pl.DataFrame([generate_product(name=product, partial=False) for product in PRODUCTS]).with_row_index("product_id")
+    df_stores = pl.DataFrame([generate_store(name=store, partial=False) for store in STORES]).with_row_index("store_id")
+    product_name_to_id = dict(zip(df_products["product"], df_products["product_id"]))
+    store_name_to_id = dict(zip(df_stores["store"], df_stores["store_id"]))
     for date in DATES:
-        records = [
-            generate_sales_record(date, store, product, partial=True)
-            for store in STORES
-            for product in PRODUCTS
-        ]
+        records = []
+        for store in STORES:
+            for product in PRODUCTS:
+                rec = generate_sales_record(date, store, product, partial=True)
+                rec["product_id"] = product_name_to_id[product]
+                rec["store_id"] = store_name_to_id[store]
+                records.append(rec)
         df = pl.DataFrame(records)
         write_df(
             df, f"{out_dir}/daily_{date.strftime('%Y%m%d')}.{file_format}", file_format
@@ -288,15 +314,20 @@ def daily_files(file_format="parquet"):
 def weekly_files_single_date(file_format="parquet"):
     out_dir = os.path.join(DATA_DIR, "weekly_files_single_date")
     os.makedirs(out_dir, exist_ok=True)
-
+    df_products = pl.DataFrame([generate_product(name=product, partial=False) for product in PRODUCTS]).with_row_index("product_id")
+    df_stores = pl.DataFrame([generate_store(name=store, partial=False) for store in STORES]).with_row_index("store_id")
+    product_name_to_id = dict(zip(df_products["product"], df_products["product_id"]))
+    store_name_to_id = dict(zip(df_stores["store"], df_stores["store_id"]))
     for i in range(0, len(DATES), 7):
         week_dates = DATES[i : i + 7]
         week_end = week_dates[0]
-        records = [
-            generate_sales_record(week_end, store, product, partial=False)
-            for store in STORES
-            for product in PRODUCTS
-        ]
+        records = []
+        for store in STORES:
+            for product in PRODUCTS:
+                rec = generate_sales_record(week_end, store, product, partial=False)
+                rec["product_id"] = product_name_to_id[product]
+                rec["store_id"] = store_name_to_id[store]
+                records.append(rec)
         df = pl.DataFrame(records)
         write_df(
             df,
@@ -308,15 +339,20 @@ def weekly_files_single_date(file_format="parquet"):
 def weekly_files_all_days(file_format="parquet"):
     out_dir = os.path.join(DATA_DIR, "weekly_files_all_days")
     os.makedirs(out_dir, exist_ok=True)
-
+    df_products = pl.DataFrame([generate_product(name=product, partial=False) for product in PRODUCTS]).with_row_index("product_id")
+    df_stores = pl.DataFrame([generate_store(name=store, partial=False) for store in STORES]).with_row_index("store_id")
+    product_name_to_id = dict(zip(df_products["product"], df_products["product_id"]))
+    store_name_to_id = dict(zip(df_stores["store"], df_stores["store_id"]))
     for i in range(0, len(DATES), 7):
         week_dates = DATES[i : i + 7]
-        records = [
-            generate_sales_record(date, store, product, partial=True)
-            for date in week_dates
-            for store in STORES
-            for product in PRODUCTS
-        ]
+        records = []
+        for date in week_dates:
+            for store in STORES:
+                for product in PRODUCTS:
+                    rec = generate_sales_record(date, store, product, partial=True)
+                    rec["product_id"] = product_name_to_id[product]
+                    rec["store_id"] = store_name_to_id[store]
+                    records.append(rec)
         if records:
             week_end = week_dates[0]
             df = pl.DataFrame(records)

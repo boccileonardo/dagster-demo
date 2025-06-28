@@ -11,6 +11,13 @@ from dagster_demo.components.polars_schemas import (
 )
 
 
+def add_data_provider_code(context: dg.AssetExecutionContext, df: pl.LazyFrame):
+    data_provider_code = context.assets_def.metadata_by_key[context.asset_key]["ssid"]
+    return df.with_columns(
+        pl.lit(data_provider_code).alias("data_provider_code"),
+    )
+
+
 def prefix_cols(df: pl.LazyFrame, prefix: str):
     col_names = df.collect_schema().names()
     technical_columns = set(
@@ -36,6 +43,7 @@ def load_site_master_data():
 
 def silver_fct_processing(context: dg.AssetExecutionContext, df: pl.LazyFrame):
     df = df.unique()  # deduplication of bronze data
+    df = add_data_provider_code(context=context, df=df)
     add_materialization_metadata(
         context=context, df=df, count_dates_in_col="time_period_end_date"
     )
@@ -53,6 +61,7 @@ def silver_prod_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFra
             right_on="corp_item_gtin",
             how="left",
         )
+    df = add_data_provider_code(context=context, df=df)
     add_materialization_metadata(context=context, df=df)
     return df
 
@@ -68,6 +77,7 @@ def silver_site_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFra
             right_on="corp_global_location_number",
             how="left",
         )
+    df = add_data_provider_code(context=context, df=df)
     add_materialization_metadata(context=context, df=df)
     return df
 

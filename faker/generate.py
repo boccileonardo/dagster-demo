@@ -261,15 +261,16 @@ def single_file_many_dates(file_format="parquet"):
     df_stores = pl.DataFrame(
         [generate_store(name=store, partial=False) for store in STORES]
     ).with_row_index("store_id")
-    product_name_to_id = dict(zip(df_products["product"], df_products["product_id"]))
-    store_name_to_id = dict(zip(df_stores["store"], df_stores["store_id"]))
+    product_name_to_row = {row["product"]: row for row in df_products.to_dicts()}
+    store_name_to_row = {row["store"]: row for row in df_stores.to_dicts()}
     records = []
     for date in DATES:
         for store in STORES:
             for product in PRODUCTS:
                 rec = generate_sales_record(date, store, product, partial=False)
-                rec["product_id"] = product_name_to_id[product]
-                rec["store_id"] = store_name_to_id[store]
+                # Merge all product/store attributes into the record
+                rec.update(product_name_to_row[product])
+                rec.update(store_name_to_row[store])
                 records.append(rec)
     df = pl.DataFrame(records)
     write_df(df, f"{out_dir}/all_dates.{file_format}", file_format)
@@ -284,15 +285,16 @@ def files_per_store(file_format="parquet"):
     df_stores = pl.DataFrame(
         [generate_store(name=store, partial=False) for store in STORES]
     ).with_row_index("store_id")
-    product_name_to_id = dict(zip(df_products["product"], df_products["product_id"]))
-    store_name_to_id = dict(zip(df_stores["store"], df_stores["store_id"]))
+    product_name_to_row = {row["product"]: row for row in df_products.to_dicts()}
+    store_name_to_row = {row["store"]: row for row in df_stores.to_dicts()}
     for store in STORES:
         records = []
         for date in DATES:
             for product in PRODUCTS:
                 rec = generate_inventory_record(date, store, product, partial=False)
-                rec["product_id"] = product_name_to_id[product]
-                rec["store_id"] = store_name_to_id[store]
+                # Merge all product/store attributes into the record
+                rec.update(product_name_to_row[product])
+                rec.update(store_name_to_row[store])
                 records.append(rec)
         df = pl.DataFrame(records)
         write_df(df, f"{out_dir}/sales_{store}.{file_format}", file_format)
@@ -332,8 +334,8 @@ def weekly_files_single_date(file_format="parquet"):
     df_stores = pl.DataFrame(
         [generate_store(name=store, partial=False) for store in STORES]
     ).with_row_index("store_id")
-    product_name_to_id = dict(zip(df_products["product"], df_products["product_id"]))
-    store_name_to_id = dict(zip(df_stores["store"], df_stores["store_id"]))
+    product_name_to_row = {row["product"]: row for row in df_products.to_dicts()}
+    store_name_to_row = {row["store"]: row for row in df_stores.to_dicts()}
     for i in range(0, len(DATES), 7):
         week_dates = DATES[i : i + 7]
         week_end = week_dates[0]
@@ -341,8 +343,9 @@ def weekly_files_single_date(file_format="parquet"):
         for store in STORES:
             for product in PRODUCTS:
                 rec = generate_sales_record(week_end, store, product, partial=False)
-                rec["product_id"] = product_name_to_id[product]
-                rec["store_id"] = store_name_to_id[store]
+                # Merge all product/store attributes into the record
+                rec.update(product_name_to_row[product])
+                rec.update(store_name_to_row[store])
                 records.append(rec)
         df = pl.DataFrame(records)
         write_df(

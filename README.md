@@ -4,9 +4,9 @@ Event-driven ETL of retailer point-of-sale data through Polars (small data), Pys
 
 ### Design approach:
 - [ ] Gold views: Apply user-specific row-level security, antitrust masking logic to gold tables.
-- [~] Gold tables: Single unity catalog table per object type (eg. site_dim, prod_dim, daily_store_fct), partitioned by retailer code, recorded in metadata for discoverability, unioning all retailer specific tables.
+- [~] Gold tables: Single unity catalog table per object type (eg. site_dim, prod_dim, daily_store_fact), partitioned by retailer code, recorded in metadata for discoverability, unioning all retailer specific tables.
 - [~] Silver tables: Retailer-level tables (natively received, as well as derived from aggregation), deduplicated, sanitized by DQ checks, and enriched by reference/master data from corporate sources.
-- [x] Bronze tables: Retailer-level tables, append-only raw data, sensor-based triggers where possible, timestamped with ingestion time, with assigned secure group key. Date partitioning only required if big data.
+- [x] Bronze tables: Retailer-level tables, append-only raw data, sensor-based triggers where possible, timestamped with ingestion time, with assigned secure group key and data provider code. Date partitioning only required if big data.
 
 - Retailer-level access is controlled by secure group keys via Unity catalog dynamic views.
 - Antitrust masking (only for competition data) is applied via dynamic views too, with a CASE .. WHEN logic that selects either the masked, or the real column depending on record age.
@@ -19,6 +19,7 @@ Surrogate key implementation:
 #TODO: Use a data quality library to run dq checks in silver
 #TODO: dagster freshness policy
 #TODO: think about partition inheritance at gold layer from previously partitioned assets
+#TODO: gold layer should use delta merge instead of iomanager to upsert into the unioned tables.
 
 Demo should include retailers that:
 - Send data via web UI/SFTP/Sharepoint to landing zone.
@@ -32,3 +33,13 @@ Demo should include retailers that:
 - Send daily files.
 - Send weekly files containing a single week-end date.
 - Send weekly files containing all days of the previous week.
+
+Local dev:
+```
+git clone https://github.com/boccileonardo/dagster-demo.git
+cd dagster-demo
+mkdir .dagster_home
+export DAGSTER_HOME=~/dagster-demo/.dagster_home
+uv sync
+uv run dg dev
+```

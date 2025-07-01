@@ -93,3 +93,4 @@ faker/data/
 data/
 .tmp*
 test.ipynb
+.dagster_home/

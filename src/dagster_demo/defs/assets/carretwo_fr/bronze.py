@@ -17,7 +17,7 @@ from dagster_demo.components.sensors import detect_new_files_in_dir
     },
     kinds={"polars", "deltalake", "bronze"},
 )  # type: ignore[call-overload]
-def carretwo_fr_bronze_day_fct(context: dg.AssetExecutionContext) -> pl.LazyFrame:
+def carretwo_fr_bronze_day_fact(context: dg.AssetExecutionContext) -> pl.LazyFrame:
     df = pl.scan_parquet(os.path.join(cfg.DIRECTORY))
     df = bronze_processing(
         context=context,
@@ -29,7 +29,7 @@ def carretwo_fr_bronze_day_fct(context: dg.AssetExecutionContext) -> pl.LazyFram
 
 job = dg.define_asset_job(
     name="bronze_carretwo_fr_job",
-    selection=dg.AssetSelection.assets(carretwo_fr_bronze_day_fct),
+    selection=dg.AssetSelection.assets(carretwo_fr_bronze_day_fact),
 )
 
 
@@ -38,16 +38,17 @@ job = dg.define_asset_job(
     default_status=dg.DefaultSensorStatus.RUNNING,
     job=job,
 )
-def sensor_carretwo_fr_bronze_day_fct(context: dg.SensorEvaluationContext):
+def sensor_carretwo_fr_bronze_day_fact(context: dg.SensorEvaluationContext):
     new_files = detect_new_files_in_dir(directory=cfg.DIRECTORY, context=context)
     if new_files:
         context.log.info(f"Found new files: {new_files}. Triggering run...")
+        # TODO: demo another retailer where only new files are processed
         yield dg.RunRequest()
     else:
         yield dg.SkipReason("No new files found")
 
 
 defs = dg.Definitions(
-    assets=[carretwo_fr_bronze_day_fct],
-    sensors=[sensor_carretwo_fr_bronze_day_fct],
+    assets=[carretwo_fr_bronze_day_fact],
+    sensors=[sensor_carretwo_fr_bronze_day_fact],
 )

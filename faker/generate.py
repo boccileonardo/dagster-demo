@@ -395,7 +395,7 @@ def fake_corporate_product_master_data():
     sampled_products = all_products.collect(engine="streaming").sample(fraction=0.3)
     sampled_products = sampled_products.select(
         pl.col("GTIN").alias("item_gtin"),
-        pl.col("GTIN").alias("prod_name"),
+        pl.col("GTIN").alias("prod_name").cast(pl.String),
         pl.lit(random_sector()).alias("sector"),
         pl.lit(random_sector()).alias("category"),
         pl.lit(random_subcategory()).alias("subcategory"),
@@ -413,7 +413,7 @@ def fake_corporate_site_master_data():
     sampled_sites = all_sites.collect(engine="streaming").sample(fraction=0.3)
     sampled_sites = sampled_sites.select(
         pl.col("global_location_number"),
-        pl.col("global_location_number").alias("site_name"),
+        pl.col("global_location_number").alias("site_name").cast(pl.String),
         pl.lit(random_address()).alias("address"),
         pl.lit(random_channel()).alias("channel"),
         pl.lit(random_lat()).alias("latitude"),

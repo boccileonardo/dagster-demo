@@ -39,7 +39,12 @@ Local dev:
 git clone https://github.com/boccileonardo/dagster-demo.git
 cd dagster-demo
 mkdir .dagster_home
-export DAGSTER_HOME=~/dagster-demo/.dagster_home
+echo 'export DAGSTER_HOME="~/dagster-demo/.dagster_home"' >> ~/.bashrc
 uv sync
 uv run dg dev
+```
+```
+# turn on the eager automation sensor in the dagster UI to allow auto materialization
+uv run faker/generate.py
+sudo ./setup-data.sh
 ```

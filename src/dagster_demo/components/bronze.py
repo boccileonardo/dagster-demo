@@ -13,6 +13,9 @@ def add_data_provider_code(context: dg.AssetExecutionContext, df: pl.LazyFrame):
 
 
 def bronze_processing(context: dg.AssetExecutionContext, df: pl.LazyFrame, config):
+    df = df.with_columns(
+        pl.exclude(pl.String).cast(str)
+    )  # cast everything to string. Schema enforcement happens in silver layer
     df = df.with_columns(secure_group_key=config.SECURE_GROUP_KEY)
     df = add_data_provider_code(context, df)
     df = add_ingestion_metadata(

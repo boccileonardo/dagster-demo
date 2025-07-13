@@ -2,6 +2,7 @@ import polars as pl
 import polars.selectors as cs
 import dagster as dg
 from typing import Literal
+from dagster_demo.components.logger import logger
 from dagster_demo.components.output_metadata import add_materialization_metadata
 from dagster_demo.components.bronze import add_ingestion_metadata
 from dagster_demo.components.polars_schemas import (
@@ -11,13 +12,16 @@ from dagster_demo.components.polars_schemas import (
 )
 
 
-def prefix_cols(df: pl.LazyFrame, prefix: str):
+def prefix_cols(df: pl.LazyFrame, prefix: str, exclude: list[str] = []):
     col_names = df.collect_schema().names()
-    technical_columns = set(
-        prod_dim_required_cols + site_dim_required_cols + store_fact_required_cols
+    excluded_columns = set(
+        prod_dim_required_cols
+        + site_dim_required_cols
+        + store_fact_required_cols
+        + exclude
     )
     prefixed_col_names = [
-        f"{prefix}_{col}" if col not in technical_columns else col for col in col_names
+        f"{prefix}_{col}" if col not in excluded_columns else col for col in col_names
     ]
     return df.rename(
         {col: new_col for col, new_col in zip(col_names, prefixed_col_names)}
@@ -31,7 +35,7 @@ def load_product_master_data():
 
 def load_site_master_data():
     df = pl.scan_parquet("faker/data/corporate_site_master_data.parquet")
-    return prefix_cols(df, "corp")
+    return prefix_cols(df, "corp", ["global_location_number"])
 
 
 def silver_fact_processing(context: dg.AssetExecutionContext, df: pl.LazyFrame):
@@ -59,14 +63,17 @@ def silver_prod_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFra
 
 def silver_site_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFrame):
     df = df.unique(subset=["site_id"])
-    df = prefix_cols(df, "source")
-    if "source_global_location_number" in df.collect_schema().names():
+    df = prefix_cols(df, "source", ["global_location_number"])
+    if "global_location_number" in df.collect_schema().names():
         master = load_site_master_data()
         df = df.join(
             master,
-            left_on="source_global_location_number",
-            right_on="corp_global_location_number",
+            on="global_location_number",
             how="left",
+        )
+    else:
+        logger.warning(
+            "Unable to join with site master data. global_location_number not found."
         )
     add_materialization_metadata(context=context, df=df)
     return df

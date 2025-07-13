@@ -3,7 +3,7 @@ from typing import Iterable
 
 prod_dim_pl_schema: dict[str, pl.DataType] = {
     # Required columns
-    "prod_id": pl.Int64(),
+    "prod_id": pl.Int32(),
     "created_at_utc_datetime": pl.Datetime(time_unit="us", time_zone="UTC"),
     "created_at_date": pl.Date(),
     "data_source": pl.String(),
@@ -11,10 +11,11 @@ prod_dim_pl_schema: dict[str, pl.DataType] = {
     # Nullable columns
     "source_prod_name": pl.String(),
     "source_sector": pl.String(),
-    "source_subcategory": pl.String(),
-    "source_item_gtin": pl.String(),
     "source_category": pl.String(),
+    "source_subcategory": pl.String(),
+    "source_item_gtin": pl.Int64(),
     "source_item_description": pl.String(),
+    "source_prod_launch_date": pl.Date(),
     # Corporate product master data
     "corp_prod_name": pl.String(),
     "corp_sector": pl.String(),
@@ -33,18 +34,18 @@ prod_dim_required_cols: list[str] = [
 
 site_dim_pl_schema: dict[str, pl.DataType] = {
     # Required columns
-    "site_id": pl.Int64(),
+    "site_id": pl.Int32(),
     "created_at_utc_datetime": pl.Datetime(time_unit="us", time_zone="UTC"),
     "created_at_date": pl.Date(),
     "data_source": pl.String(),
     "data_provider_code": pl.Int32(),
     # Nullable columns
+    "global_location_number": pl.Int64(),
     "source_site_name": pl.String(),
     "source_address": pl.String(),
     "source_channel": pl.String(),
     "source_latitude": pl.Float64(),
     "source_longitude": pl.Float64(),
-    "source_global_location_number": pl.String(),
     "source_city": pl.String(),
     "source_state": pl.String(),
     "source_county": pl.String(),
@@ -72,8 +73,8 @@ site_dim_required_cols: list[str] = [
 store_fact_pl_schema: dict[str, pl.DataType] = {
     # Required columns
     "time_period_end_date": pl.Date(),
-    "prod_id": pl.Int64(),
-    "site_id": pl.Int64(),
+    "prod_id": pl.Int32(),
+    "site_id": pl.Int32(),
     "created_at_utc_datetime": pl.Datetime(time_unit="us", time_zone="UTC"),
     "created_at_date": pl.Date(),
     "data_source": pl.String(),

@@ -25,11 +25,18 @@ def lidlo_de_silver_day_fact(
     context: dg.AssetExecutionContext, lidlo_de_bronze_day_fact: pl.LazyFrame
 ) -> pl.LazyFrame:
     df = lidlo_de_bronze_day_fact.select(
-        pl.col("date").alias("time_period_end_date").str.to_date("%Y-%m-%d"),
-        pl.col("product_id").alias("prod_id"),
-        pl.col("store_id").alias("site_id"),
-        pl.col("sales_qty").alias("pos_sales_units"),
-        pl.col("sales_value_usd").alias("pos_sales_value_usd"),
+        pl.col("date").str.to_date("%Y-%m-%d").alias("time_period_end_date"),
+        pl.col("product_id").cast(pl.Int32).alias("prod_id"),
+        pl.col("store_id").cast(pl.Int32).alias("site_id"),
+        pl.col("sales_qty").cast(pl.Int64).alias("pos_sales_units"),
+        pl.col("sales_value_usd").cast(pl.Float64).alias("pos_sales_value_usd"),
+        pl.col("sales_value_local_currency")
+        .cast(pl.Float64)
+        .alias("pos_sales_value_lc"),
+        pl.col("return_amount").cast(pl.Int64).alias("returned_qty"),
+        pl.col("return_value_local_currency")
+        .cast(pl.Float64)
+        .alias("returned_value_lc"),
         pl.col("created_at_utc_datetime"),
         pl.col("created_at_date"),
         pl.col("data_source"),
@@ -55,8 +62,13 @@ def lidlo_de_silver_prod_dim(
     context: dg.AssetExecutionContext, lidlo_de_bronze_day_fact: pl.LazyFrame
 ) -> pl.LazyFrame:
     df = lidlo_de_bronze_day_fact.select(
-        pl.col("product_id").alias("prod_id"),
+        pl.col("product_id").cast(pl.Int32).alias("prod_id"),
         pl.col("product").alias("prod_name"),
+        pl.col("category"),
+        pl.col("sector"),
+        pl.col("launch_date").str.to_date("%Y-%m-%d").alias("prod_launch_date"),
+        pl.col("GTIN").cast(pl.Int64).alias("item_gtin"),
+        pl.col("description").alias("item_description"),
         pl.col("created_at_utc_datetime"),
         pl.col("created_at_date"),
         pl.col("data_source"),
@@ -82,8 +94,14 @@ def lidlo_de_silver_site_dim(
     context: dg.AssetExecutionContext, lidlo_de_bronze_day_fact: pl.LazyFrame
 ) -> pl.LazyFrame:
     df = lidlo_de_bronze_day_fact.select(
-        pl.col("store_id").alias("site_id"),
+        pl.col("store_id").cast(pl.Int32).alias("site_id"),
         pl.col("store").alias("site_name"),
+        pl.col("city"),
+        pl.col("address"),
+        pl.col("channel"),
+        pl.col("latitude").cast(pl.Float64),
+        pl.col("longitude").cast(pl.Float64),
+        pl.col("global_location_number").cast(pl.Int64),
         pl.col("created_at_utc_datetime"),
         pl.col("created_at_date"),
         pl.col("data_source"),

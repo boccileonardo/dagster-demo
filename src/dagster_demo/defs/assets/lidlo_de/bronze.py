@@ -4,6 +4,7 @@ from dagster_demo.components.logger import logger
 from dagster_demo.defs.assets.lidlo_de import config as cfg
 from dagster_demo.components.bronze import bronze_processing
 from dagster_demo.components.sensors import detect_new_files_in_dir
+from dagster_demo.defs.resources.freshness_policy import daily_policy
 
 
 @dg.asset(
@@ -16,6 +17,7 @@ from dagster_demo.components.sensors import detect_new_files_in_dir
         "country": cfg.COUNTRY,
     },
     kinds={"polars", "deltalake", "bronze"},
+    freshness_policy=daily_policy,
 )  # type: ignore[call-overload]
 def lidlo_de_bronze_day_fact(context: dg.AssetExecutionContext) -> pl.LazyFrame:
     df = pl.scan_parquet(cfg.DIRECTORY)

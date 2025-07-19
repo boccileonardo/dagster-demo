@@ -13,6 +13,7 @@ from dagster_demo.components.polars_schemas import (
     io_manager_key="gold_polars_parquet_io_manager",
     partitions_def=data_provider_partitions,
     metadata={
+        "streaming": True,
         "partition_by": "data_provider_code",
     },
     automation_condition=dg.AutomationCondition.eager(),

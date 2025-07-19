@@ -14,6 +14,7 @@ from dagster_demo.components.silver import (
     automation_condition=dg.AutomationCondition.eager(),
     group_name=cfg.RETAILER_NAME,
     metadata={
+        "streaming": True,
         "ssid": cfg.RETAILER_ID,
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,
@@ -52,6 +53,7 @@ def lidlo_de_silver_day_fact(
     automation_condition=dg.AutomationCondition.eager(),
     group_name=cfg.RETAILER_NAME,
     metadata={
+        "streaming": True,
         "ssid": cfg.RETAILER_ID,
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,
@@ -84,6 +86,7 @@ def lidlo_de_silver_prod_dim(
     automation_condition=dg.AutomationCondition.eager(),
     group_name=cfg.RETAILER_NAME,
     metadata={
+        "streaming": True,
         "ssid": cfg.RETAILER_ID,
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,
@@ -117,6 +120,7 @@ def lidlo_de_silver_site_dim(
     automation_condition=dg.AutomationCondition.eager(),
     group_name=cfg.RETAILER_NAME,
     metadata={
+        "streaming": True,
         "ssid": cfg.RETAILER_ID,
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,
@@ -139,6 +143,7 @@ def lidlo_de_silver_week_fact(
     automation_condition=dg.AutomationCondition.eager(),
     group_name=cfg.RETAILER_NAME,
     metadata={
+        "streaming": True,
         "ssid": cfg.RETAILER_ID,
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,

@@ -12,6 +12,7 @@ from dagster_demo.defs.resources.freshness_policy import daily_policy
     group_name=cfg.RETAILER_NAME,
     metadata={
         "delta_write_options": {"schema_mode": "merge"},
+        "streaming": True,
         "ssid": cfg.RETAILER_ID,
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,

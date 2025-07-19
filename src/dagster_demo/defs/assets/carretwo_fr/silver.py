@@ -30,6 +30,7 @@ def carretwo_fr_silver_day_fact(
         pl.col("store_id").cast(pl.Int32).alias("site_id"),
         pl.col("sales_qty").cast(pl.Int64).alias("pos_sales_units"),
         pl.col("sales_value_usd").cast(pl.Float64).alias("pos_sales_value_usd"),
+        pl.col("secure_group_key"),
         pl.col("created_at_utc_datetime"),
         pl.col("created_at_date"),
         pl.col("data_source"),

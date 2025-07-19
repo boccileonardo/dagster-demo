@@ -37,6 +37,7 @@ def lidlo_de_silver_day_fact(
         pl.col("return_value_local_currency")
         .cast(pl.Float64)
         .alias("returned_value_lc"),
+        pl.col("secure_group_key"),
         pl.col("created_at_utc_datetime"),
         pl.col("created_at_date"),
         pl.col("data_source"),

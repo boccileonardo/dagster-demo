@@ -8,6 +8,7 @@ prod_dim_pl_schema: dict[str, pl.DataType] = {
     "created_at_date": pl.Date(),
     "data_source": pl.String(),
     "data_provider_code": pl.Int32(),
+    "secure_group_key": pl.Int32(),
     # Nullable columns
     "source_prod_name": pl.String(),
     "source_sector": pl.String(),
@@ -30,6 +31,7 @@ prod_dim_required_cols: list[str] = [
     "created_at_date",
     "data_source",
     "data_provider_code",
+    "secure_group_key",
 ]
 
 site_dim_pl_schema: dict[str, pl.DataType] = {
@@ -39,6 +41,7 @@ site_dim_pl_schema: dict[str, pl.DataType] = {
     "created_at_date": pl.Date(),
     "data_source": pl.String(),
     "data_provider_code": pl.Int32(),
+    "secure_group_key": pl.Int32(),
     # Nullable columns
     "global_location_number": pl.Int64(),
     "source_site_name": pl.String(),
@@ -68,6 +71,7 @@ site_dim_required_cols: list[str] = [
     "created_at_date",
     "data_source",
     "data_provider_code",
+    "secure_group_key",
 ]
 
 store_fact_pl_schema: dict[str, pl.DataType] = {
@@ -79,6 +83,7 @@ store_fact_pl_schema: dict[str, pl.DataType] = {
     "created_at_date": pl.Date(),
     "data_source": pl.String(),
     "data_provider_code": pl.Int32(),
+    "secure_group_key": pl.Int32(),
     # Nullable columns
     "pos_sales_units": pl.Int64(),
     "pos_sales_value_usd": pl.Float64(),
@@ -100,6 +105,7 @@ store_fact_required_cols: list[str] = [
     "created_at_date",
     "data_source",
     "data_provider_code",
+    "secure_group_key",
 ]
 
 

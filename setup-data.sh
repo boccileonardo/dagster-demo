@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #delete contents of dagster home
-rm -rf .dagster_home/*
+rm -rf .dagster_home/*/
 
 # delete directories and contents: /data/landing, /data/bronze, /data/silver, /data/gold
 rm -rf data/landing/*

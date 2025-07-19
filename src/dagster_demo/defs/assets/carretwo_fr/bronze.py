@@ -11,6 +11,7 @@ from dagster_demo.components.sensors import detect_new_files_in_dir
     io_manager_key="bronze_polars_parquet_io_manager",
     group_name=cfg.RETAILER_NAME,
     metadata={
+        "delta_write_options": {"schema_mode": "merge"},
         "ssid": cfg.RETAILER_ID,
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,

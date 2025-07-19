@@ -21,6 +21,7 @@ from dagster_demo.defs.resources.freshness_policy import daily_policy
     freshness_policy=daily_policy,
 )  # type: ignore[call-overload]
 def lidlo_de_bronze_day_fact(context: dg.AssetExecutionContext) -> pl.LazyFrame:
+    """Lidlo Germany shares a new file with many dates in one file."""
     df = pl.scan_parquet(cfg.DIRECTORY)
     df = bronze_processing(
         context=context,

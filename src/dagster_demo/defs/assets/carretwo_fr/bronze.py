@@ -1,6 +1,5 @@
 import dagster as dg
 import polars as pl
-import os
 from dagster_demo.defs.assets.carretwo_fr import config as cfg
 from dagster_demo.defs.resources.freshness_policy import daily_policy
 from dagster_demo.components.bronze import bronze_processing
@@ -21,7 +20,10 @@ from dagster_demo.components.sensors import detect_new_files_in_dir
     freshness_policy=daily_policy,
 )  # type: ignore[call-overload]
 def carretwo_fr_bronze_day_fact(context: dg.AssetExecutionContext) -> pl.LazyFrame:
-    df = pl.scan_parquet(os.path.join(cfg.DIRECTORY))
+    """
+    Carretwo France shares a single data file every day containing fact+dim via Uploader portal.
+    """
+    df = pl.scan_parquet(cfg.DIRECTORY)
     df = bronze_processing(
         context=context,
         df=df,

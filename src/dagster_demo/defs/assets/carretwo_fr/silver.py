@@ -58,6 +58,7 @@ def carretwo_fr_silver_prod_dim(
     df = carretwo_fr_bronze_day_fact.select(
         pl.col("product_id").cast(pl.Int32).alias("prod_id"),
         pl.col("product").alias("prod_name"),
+        pl.col("secure_group_key"),
         pl.col("created_at_utc_datetime"),
         pl.col("created_at_date"),
         pl.col("data_source"),
@@ -85,6 +86,7 @@ def carretwo_fr_silver_site_dim(
     df = carretwo_fr_bronze_day_fact.select(
         pl.col("store_id").cast(pl.Int32).alias("site_id"),
         pl.col("store").alias("site_name"),
+        pl.col("secure_group_key"),
         pl.col("created_at_utc_datetime"),
         pl.col("created_at_date"),
         pl.col("data_source"),

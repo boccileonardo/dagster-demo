@@ -1,4 +1,5 @@
 import os
+import shutil
 import random
 from datetime import datetime, timedelta
 import polars as pl
@@ -6,6 +7,10 @@ from faker import Faker
 
 fake = Faker()
 DATA_DIR = "faker/data"
+
+
+def clean_data_dir():
+    shutil.rmtree(DATA_DIR)
 
 
 # --- Uniform date generation ---
@@ -423,6 +428,7 @@ def fake_corporate_site_master_data():
 
 
 if __name__ == "__main__":
+    clean_data_dir()
     one_big_table("json")
     separate_dim_fact("csv")
     single_file_many_dates()

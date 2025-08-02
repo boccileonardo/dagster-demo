@@ -14,10 +14,10 @@ dev = [
     "dagster-webserver",
     "dagster-dg-cli[local]",
     "faker>=37.3.0",
-    "ipykernel>=6.29.5",
     "pre-commit>=4.2.0",
     "mypy>=1.16.1",
     "ruff>=0.12.1",
+    "marimo[recommended]>=0.14.16",
 ]
 
 [build-system]

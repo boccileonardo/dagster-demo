@@ -92,5 +92,5 @@ cython_debug/
 faker/data/
 data/
 .tmp*
-test.ipynb
+marimo.py
 .dagster_home/

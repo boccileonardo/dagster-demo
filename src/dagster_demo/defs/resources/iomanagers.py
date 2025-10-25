@@ -12,11 +12,8 @@ defs = dg.Definitions(
     resources={
         "bronze_polars_delta_append_io_manager": DeltaLakePolarsIOManager(
             root_uri="data/bronze",
-            mode=WriteMode.merge,
+            mode=WriteMode.append,
             schema_mode=SchemaMode.merge,
-            merge_config=MergeConfig(
-                merge_type=MergeType.deduplicate_insert,
-            ),
             storage_options=LocalConfig(),
         ),  # append and be flexible with schema in bronze layer
         "silver_polars_delta_merge_io_manager": DeltaLakePolarsIOManager(

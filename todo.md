@@ -1,3 +1,4 @@
+- Handle arbitrary retailer column not fitting in data model
 - separate fact dim with multiple dates (3 files on each date)
 - multiple file handling for each date
 - slowly changing dimensions T2

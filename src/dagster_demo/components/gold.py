@@ -13,16 +13,16 @@ def gold_generic_processing(
     context: dg.AssetExecutionContext,
     base_df: pl.LazyFrame,
     assets: list[pl.LazyFrame],
-    data_provider_num: int,
+    data_provider_code: str,
 ):
-    logger.info(f"filtering to data provider: cds_{data_provider_num}")
+    logger.info(f"filtering to data provider: {data_provider_code}")
     assets = [
-        df.filter(pl.col("data_provider_code") == data_provider_num) for df in assets
+        df.filter(pl.col("data_provider_code") == data_provider_code) for df in assets
     ]
     assets = [df for df in assets if not df.limit(1).collect().is_empty()]
     df = pl.concat(
         [
-            base_df.filter(pl.col("data_provider_code") == f"cds_{data_provider_num}"),
+            base_df.filter(pl.col("data_provider_code") == data_provider_code),
             *assets,
         ],
         how="diagonal_relaxed",
@@ -44,7 +44,7 @@ def gold_prod_dim_processing(
         context=context,
         base_df=base_df,
         assets=assets,
-        data_provider_num=context.partition_key,
+        data_provider_code=context.partition_key,
     )
     add_materialization_metadata(context=context, df=df, count_rows=False)
     return df
@@ -63,7 +63,7 @@ def gold_site_dim_processing(
         context=context,
         base_df=base_df,
         assets=assets,
-        data_provider_num=context.partition_key,
+        data_provider_code=context.partition_key,
     )
     add_materialization_metadata(context=context, df=df, count_rows=False)
     return df
@@ -83,7 +83,7 @@ def gold_store_fact_processing(
         context=context,
         base_df=base_df,
         assets=assets,
-        data_provider_num=context.partition_key,
+        data_provider_code=context.partition_key,
     )
     add_materialization_metadata(
         context=context,

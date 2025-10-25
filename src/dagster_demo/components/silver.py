@@ -50,6 +50,7 @@ def silver_prod_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFra
     df = df.unique(subset=["prod_id"])
     df = prefix_cols(df, "source")
     if "source_item_gtin" in df.collect_schema().names():
+        logger.info("Joining with corporate product master on GTIN.")
         master = load_product_master_data()
         df = df.join(
             master,
@@ -57,6 +58,15 @@ def silver_prod_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFra
             right_on="corp_item_gtin",
             how="left",
         )
+    else:
+        logger.info(
+            "Skipping join with corporate master data due to missing GTIN for this retailer."
+        )
+    df = df.with_columns(
+        prod_id=pl.concat_str(
+            pl.col("data_provider_code").str.strip_chars_start("cds_"), "prod_id"
+        ).cast(pl.Int32)
+    )
     add_materialization_metadata(context=context, df=df, count_rows=False)
     return df
 
@@ -75,6 +85,11 @@ def silver_site_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFra
         logger.warning(
             "Unable to join with site master data. global_location_number not found."
         )
+    df = df.with_columns(
+        site_id=pl.concat_str(
+            pl.col("data_provider_code").str.strip_chars_start("cds_"), "site_id"
+        ).cast(pl.Int32)
+    )
     add_materialization_metadata(context=context, df=df, count_rows=False)
     return df
 

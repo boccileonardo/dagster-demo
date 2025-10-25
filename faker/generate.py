@@ -224,6 +224,7 @@ def one_big_table(file_format="parquet"):
     df = pl.DataFrame(records)
 
     write_df(df, f"{out_dir}/one_big_table.{file_format}", file_format)
+    return None, None
 
 
 def separate_dim_fact(file_format="parquet"):
@@ -254,6 +255,7 @@ def separate_dim_fact(file_format="parquet"):
     write_df(df_products, f"{out_dir}/dim_products.{file_format}", file_format)
     write_df(df_stores, f"{out_dir}/dim_stores.{file_format}", file_format)
     write_df(df_fact, f"{out_dir}/fact_sales.{file_format}", file_format)
+    return df_products, df_stores
 
 
 def single_file_many_dates(file_format="parquet"):
@@ -279,6 +281,7 @@ def single_file_many_dates(file_format="parquet"):
                 records.append(rec)
     df = pl.DataFrame(records)
     write_df(df, f"{out_dir}/all_dates.{file_format}", file_format)
+    return df_products, df_stores
 
 
 def files_per_store(file_format="parquet"):
@@ -303,6 +306,7 @@ def files_per_store(file_format="parquet"):
                 records.append(rec)
         df = pl.DataFrame(records)
         write_df(df, f"{out_dir}/sales_{store}.{file_format}", file_format)
+    return df_products, df_stores
 
 
 def daily_files(file_format="parquet"):
@@ -328,6 +332,7 @@ def daily_files(file_format="parquet"):
         write_df(
             df, f"{out_dir}/daily_{date.strftime('%Y%m%d')}.{file_format}", file_format
         )
+    return df_products, df_stores
 
 
 def weekly_files_single_date(file_format="parquet"):
@@ -358,6 +363,7 @@ def weekly_files_single_date(file_format="parquet"):
             f"{out_dir}/weekly_single_{week_end.strftime('%Y%m%d')}.{file_format}",
             file_format,
         )
+    return df_products, df_stores
 
 
 def weekly_files_all_days(file_format="parquet"):
@@ -389,52 +395,79 @@ def weekly_files_all_days(file_format="parquet"):
                 f"{out_dir}/weekly_all_{week_end.strftime('%Y%m%d')}.{file_format}",
                 file_format,
             )
+    return df_products, df_stores
 
 
-def fake_corporate_product_master_data():
+def fake_corporate_product_master_data(all_products_dfs):
+    all_products_dfs = [
+        df.rename({"product_id": "id"}) if "product_id" in df.columns else df
+        for df in all_products_dfs
+    ]
     all_products = (
-        pl.scan_csv("faker/data/separate_dim_fact/dim_products.csv")
-        .select("GTIN")
-        .unique()
+        pl.concat(all_products_dfs)
+        .unique(subset=["GTIN"])
+        .select("GTIN", "product", "category", "sector", "description")
     )
-    sampled_products = all_products.collect(engine="streaming").sample(fraction=0.3)
+    sampled_products = all_products.sample(fraction=0.3)
     sampled_products = sampled_products.select(
-        pl.col("GTIN").alias("item_gtin"),
-        pl.col("GTIN").alias("prod_name").cast(pl.String),
-        pl.lit(random_sector()).alias("sector"),
-        pl.lit(random_sector()).alias("category"),
-        pl.lit(random_subcategory()).alias("subcategory"),
-        pl.lit(random_subcategory()).alias("item_description"),
+        pl.col("GTIN").alias("item_gtin").cast(pl.Int64),
+        pl.col("product").alias("prod_name"),
+        pl.col("sector"),
+        pl.col("category"),
+        pl.col("description").alias("item_description"),
     )
     sampled_products.write_parquet("faker/data/corporate_product_master_data.parquet")
 
 
-def fake_corporate_site_master_data():
+def fake_corporate_site_master_data(all_stores_dfs):
+    all_stores_dfs = [
+        df.rename({"store_id": "id"}) if "store_id" in df.columns else df
+        for df in all_stores_dfs
+    ]
     all_sites = (
-        pl.scan_csv("faker/data/separate_dim_fact/dim_stores.csv")
-        .select("global_location_number")
-        .unique()
+        pl.concat(all_stores_dfs)
+        .unique(subset=["global_location_number"])
+        .select(
+            "global_location_number",
+            "store",
+            "address",
+            "channel",
+            "latitude",
+            "longitude",
+        )
     )
-    sampled_sites = all_sites.collect(engine="streaming").sample(fraction=0.3)
+    sampled_sites = all_sites.sample(fraction=0.3)
     sampled_sites = sampled_sites.select(
-        pl.col("global_location_number"),
-        pl.col("global_location_number").alias("site_name").cast(pl.String),
-        pl.lit(random_address()).alias("address"),
-        pl.lit(random_channel()).alias("channel"),
-        pl.lit(random_lat()).alias("latitude"),
-        pl.lit(random_lon()).alias("longitude"),
+        pl.col("global_location_number").cast(pl.Int64),
+        pl.col("store").alias("site_name"),
+        pl.col("address"),
+        pl.col("channel"),
+        pl.col("latitude"),
+        pl.col("longitude"),
     )
     sampled_sites.write_parquet("faker/data/corporate_site_master_data.parquet")
 
 
 if __name__ == "__main__":
     clean_data_dir()
-    one_big_table("json")
-    separate_dim_fact("csv")
-    single_file_many_dates()
-    files_per_store("txt")
-    daily_files()
-    weekly_files_single_date()
-    weekly_files_all_days()
-    fake_corporate_product_master_data()
-    fake_corporate_site_master_data()
+    all_products_dfs = []
+    all_stores_dfs = []
+
+    data_gens = [
+        one_big_table("json"),
+        separate_dim_fact("csv"),
+        single_file_many_dates(),
+        files_per_store("txt"),
+        daily_files(),
+        weekly_files_single_date(),
+        weekly_files_all_days(),
+    ]
+
+    for prod_df, store_df in data_gens:
+        if prod_df is not None:
+            all_products_dfs.append(prod_df)
+        if store_df is not None:
+            all_stores_dfs.append(store_df)
+
+    fake_corporate_product_master_data(all_products_dfs)
+    fake_corporate_site_master_data(all_stores_dfs)

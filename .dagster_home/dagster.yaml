@@ -1,2 +1,5 @@
 freshness:
   enabled: True
+run_retries:
+  enabled: true
+  max_retries: 3

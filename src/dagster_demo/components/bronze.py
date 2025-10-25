@@ -7,6 +7,11 @@ from dagster_demo.components.output_metadata import add_materialization_metadata
 
 def add_data_provider_code(context: dg.AssetExecutionContext, df: pl.LazyFrame):
     data_provider_code = context.assets_def.metadata_by_key[context.asset_key]["ssid"]
+    data_provider_code = (
+        data_provider_code
+        if str(data_provider_code).startswith("cds")
+        else f"cds_{data_provider_code}"
+    )
     return df.with_columns(
         pl.lit(data_provider_code).alias("data_provider_code"),
     )

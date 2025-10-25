@@ -13,16 +13,16 @@ def gold_generic_processing(
     context: dg.AssetExecutionContext,
     base_df: pl.LazyFrame,
     assets: list[pl.LazyFrame],
-    data_provider_code: int,
+    data_provider_num: int,
 ):
-    logger.info(f"filtering to data provider: {data_provider_code}")
+    logger.info(f"filtering to data provider: cds_{data_provider_num}")
     assets = [
-        df.filter(pl.col("data_provider_code") == data_provider_code) for df in assets
+        df.filter(pl.col("data_provider_code") == data_provider_num) for df in assets
     ]
     assets = [df for df in assets if not df.limit(1).collect().is_empty()]
     df = pl.concat(
         [
-            base_df.filter(pl.col("data_provider_code") == data_provider_code),
+            base_df.filter(pl.col("data_provider_code") == f"cds_{data_provider_num}"),
             *assets,
         ],
         how="diagonal_relaxed",
@@ -36,7 +36,7 @@ def gold_prod_dim_processing(
     assets: list[pl.LazyFrame],
 ) -> pl.LazyFrame:
     try:
-        base_df = pl.scan_delta("data/gold/gold_prod_dim.delta")
+        base_df = pl.scan_delta("data/gold/public/gold_prod_dim.delta")
     except Exception as e:
         logger.warning(f"encountered {e}, creating empty gold from known schema")
         base_df = pl.LazyFrame(schema=prod_dim_pl_schema)
@@ -44,9 +44,9 @@ def gold_prod_dim_processing(
         context=context,
         base_df=base_df,
         assets=assets,
-        data_provider_code=int(context.partition_key),
+        data_provider_num=context.partition_key,
     )
-    add_materialization_metadata(context=context, df=df)
+    add_materialization_metadata(context=context, df=df, count_rows=False)
     return df
 
 
@@ -55,7 +55,7 @@ def gold_site_dim_processing(
     assets: list[pl.LazyFrame],
 ) -> pl.LazyFrame:
     try:
-        base_df = pl.scan_delta("data/gold/gold_site_dim.delta")
+        base_df = pl.scan_delta("data/gold/public/gold_site_dim.delta")
     except Exception as e:
         logger.warning(f"encountered {e}, creating empty gold from known schema")
         base_df = pl.LazyFrame(schema=site_dim_pl_schema)
@@ -63,9 +63,9 @@ def gold_site_dim_processing(
         context=context,
         base_df=base_df,
         assets=assets,
-        data_provider_code=int(context.partition_key),
+        data_provider_num=context.partition_key,
     )
-    add_materialization_metadata(context=context, df=df)
+    add_materialization_metadata(context=context, df=df, count_rows=False)
     return df
 
 
@@ -75,7 +75,7 @@ def gold_store_fact_processing(
     granularity: str,
 ) -> pl.LazyFrame:
     try:
-        base_df = pl.scan_delta(f"data/gold/gold_store_{granularity}_fact.delta")
+        base_df = pl.scan_delta(f"data/gold/public/gold_store_{granularity}_fact.delta")
     except Exception as e:
         logger.warning(f"encountered {e}, creating empty gold from known schema")
         base_df = pl.LazyFrame(schema=store_fact_pl_schema)
@@ -83,9 +83,12 @@ def gold_store_fact_processing(
         context=context,
         base_df=base_df,
         assets=assets,
-        data_provider_code=int(context.partition_key),
+        data_provider_num=context.partition_key,
     )
     add_materialization_metadata(
-        context=context, df=df, count_dates_in_col="time_period_end_date"
+        context=context,
+        df=df,
+        count_dates_in_col="time_period_end_date",
+        count_rows=False,
     )
     return df

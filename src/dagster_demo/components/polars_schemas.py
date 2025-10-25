@@ -7,7 +7,7 @@ prod_dim_pl_schema: dict[str, pl.DataType] = {
     "created_at_utc_datetime": pl.Datetime(time_unit="us", time_zone="UTC"),
     "created_at_date": pl.Date(),
     "data_source": pl.String(),
-    "data_provider_code": pl.Int32(),
+    "data_provider_code": pl.String(),
     "secure_group_key": pl.Int32(),
     # Nullable columns
     "source_prod_name": pl.String(),
@@ -40,7 +40,7 @@ site_dim_pl_schema: dict[str, pl.DataType] = {
     "created_at_utc_datetime": pl.Datetime(time_unit="us", time_zone="UTC"),
     "created_at_date": pl.Date(),
     "data_source": pl.String(),
-    "data_provider_code": pl.Int32(),
+    "data_provider_code": pl.String(),
     "secure_group_key": pl.Int32(),
     # Nullable columns
     "global_location_number": pl.Int64(),
@@ -82,7 +82,7 @@ store_fact_pl_schema: dict[str, pl.DataType] = {
     "created_at_utc_datetime": pl.Datetime(time_unit="us", time_zone="UTC"),
     "created_at_date": pl.Date(),
     "data_source": pl.String(),
-    "data_provider_code": pl.Int32(),
+    "data_provider_code": pl.String(),
     "secure_group_key": pl.Int32(),
     # Nullable columns
     "pos_sales_units": pl.Int64(),

@@ -10,7 +10,7 @@ from dagster_demo.components.silver import (
 
 
 @dg.asset(
-    io_manager_key="silver_polars_parquet_io_manager",
+    io_manager_key="silver_polars_delta_merge_io_manager",
     automation_condition=dg.AutomationCondition.eager(),
     group_name=cfg.RETAILER_NAME,
     metadata={
@@ -18,9 +18,10 @@ from dagster_demo.components.silver import (
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,
         "country": cfg.COUNTRY,
+        "merge_predicate": "s.time_period_end_date = t.time_period_end_date AND s.prod_id = t.prod_id AND s.site_id = t.site_id",
     },
     kinds={"polars", "deltalake", "silver"},
-)  # type: ignore[call-overload]
+)
 def carretwo_fr_silver_day_fact(
     context: dg.AssetExecutionContext, carretwo_fr_bronze_day_fact: pl.LazyFrame
 ) -> pl.LazyFrame:
@@ -41,7 +42,7 @@ def carretwo_fr_silver_day_fact(
 
 
 @dg.asset(
-    io_manager_key="silver_polars_parquet_io_manager",
+    io_manager_key="silver_polars_delta_merge_io_manager",
     automation_condition=dg.AutomationCondition.eager(),
     group_name=cfg.RETAILER_NAME,
     metadata={
@@ -49,9 +50,10 @@ def carretwo_fr_silver_day_fact(
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,
         "country": cfg.COUNTRY,
+        "merge_predicate": "s.prod_id = t.prod_id",
     },
     kinds={"polars", "deltalake", "silver"},
-)  # type: ignore[call-overload]
+)
 def carretwo_fr_silver_prod_dim(
     context: dg.AssetExecutionContext, carretwo_fr_bronze_day_fact: pl.LazyFrame
 ) -> pl.LazyFrame:
@@ -69,7 +71,7 @@ def carretwo_fr_silver_prod_dim(
 
 
 @dg.asset(
-    io_manager_key="silver_polars_parquet_io_manager",
+    io_manager_key="silver_polars_delta_merge_io_manager",
     automation_condition=dg.AutomationCondition.eager(),
     group_name=cfg.RETAILER_NAME,
     metadata={
@@ -77,9 +79,10 @@ def carretwo_fr_silver_prod_dim(
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,
         "country": cfg.COUNTRY,
+        "merge_predicate": "s.site_id = t.site_id",
     },
     kinds={"polars", "deltalake", "silver"},
-)  # type: ignore[call-overload]
+)
 def carretwo_fr_silver_site_dim(
     context: dg.AssetExecutionContext, carretwo_fr_bronze_day_fact: pl.LazyFrame
 ) -> pl.LazyFrame:
@@ -97,7 +100,7 @@ def carretwo_fr_silver_site_dim(
 
 
 @dg.asset(
-    io_manager_key="silver_polars_parquet_io_manager",
+    io_manager_key="silver_polars_delta_merge_io_manager",
     automation_condition=dg.AutomationCondition.eager(),
     group_name=cfg.RETAILER_NAME,
     metadata={
@@ -105,10 +108,11 @@ def carretwo_fr_silver_site_dim(
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,
         "country": cfg.COUNTRY,
+        "merge_predicate": "s.time_period_end_date = t.time_period_end_date AND s.prod_id = t.prod_id AND s.site_id = t.site_id",
     },
     kinds={"polars", "deltalake", "silver"},
     tags={"aggregation": "day_to_week"},
-)  # type: ignore[call-overload]
+)
 def carretwo_fr_silver_week_fact(
     context: dg.AssetExecutionContext, carretwo_fr_silver_day_fact: pl.LazyFrame
 ) -> pl.LazyFrame:
@@ -119,7 +123,7 @@ def carretwo_fr_silver_week_fact(
 
 
 @dg.asset(
-    io_manager_key="silver_polars_parquet_io_manager",
+    io_manager_key="silver_polars_delta_merge_io_manager",
     automation_condition=dg.AutomationCondition.eager(),
     group_name=cfg.RETAILER_NAME,
     metadata={
@@ -127,10 +131,11 @@ def carretwo_fr_silver_week_fact(
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,
         "country": cfg.COUNTRY,
+        "merge_predicate": "s.time_period_end_date = t.time_period_end_date AND s.prod_id = t.prod_id AND s.site_id = t.site_id",
     },
     kinds={"polars", "deltalake", "silver"},
     tags={"aggregation": "day_to_month"},
-)  # type: ignore[call-overload]
+)
 def carretwo_fr_silver_month_fact(
     context: dg.AssetExecutionContext, carretwo_fr_silver_day_fact: pl.LazyFrame
 ) -> pl.LazyFrame:

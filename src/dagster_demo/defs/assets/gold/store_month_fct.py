@@ -10,10 +10,11 @@ from dagster_demo.components.polars_schemas import (
 
 
 @dg.asset(
-    io_manager_key="gold_polars_parquet_io_manager",
+    io_manager_key="gold_polars_delta_merge_io_manager",
     partitions_def=data_provider_partitions,
     metadata={
-        "partition_by": "data_provider_code",
+        "partition_expr": "data_provider_code",
+        "merge_predicate": "s.time_period_end_date = t.time_period_end_date AND s.prod_id = t.prod_id AND s.site_id = t.site_id",
     },
     automation_condition=dg.AutomationCondition.eager(),
     group_name="refined",

@@ -7,10 +7,9 @@ from dagster_demo.components.sensors import detect_new_files_in_dir
 
 
 @dg.asset(
-    io_manager_key="bronze_polars_parquet_io_manager",
+    io_manager_key="bronze_polars_delta_append_io_manager",
     group_name=cfg.RETAILER_NAME,
     metadata={
-        "delta_write_options": {"schema_mode": "merge"},
         "ssid": cfg.RETAILER_ID,
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,
@@ -18,7 +17,7 @@ from dagster_demo.components.sensors import detect_new_files_in_dir
     },
     kinds={"polars", "deltalake", "bronze"},
     freshness_policy=daily_policy,
-)  # type: ignore[call-overload]
+)
 def carretwo_fr_bronze_day_fact(context: dg.AssetExecutionContext) -> pl.LazyFrame:
     """
     Carretwo France shares a single data file every day containing fact+dim via Uploader portal.

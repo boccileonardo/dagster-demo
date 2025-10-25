@@ -57,7 +57,7 @@ def silver_prod_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFra
             right_on="corp_item_gtin",
             how="left",
         )
-    add_materialization_metadata(context=context, df=df)
+    add_materialization_metadata(context=context, df=df, count_rows=False)
     return df
 
 
@@ -75,7 +75,7 @@ def silver_site_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFra
         logger.warning(
             "Unable to join with site master data. global_location_number not found."
         )
-    add_materialization_metadata(context=context, df=df)
+    add_materialization_metadata(context=context, df=df, count_rows=False)
     return df
 
 
@@ -101,6 +101,9 @@ def silver_fact_downsample(
     )
     df = add_ingestion_metadata(df=df, data_source="aggregation")
     add_materialization_metadata(
-        context=context, df=df, count_dates_in_col="time_period_end_date"
+        context=context,
+        df=df,
+        count_dates_in_col="time_period_end_date",
+        count_rows=False,
     )
     return df

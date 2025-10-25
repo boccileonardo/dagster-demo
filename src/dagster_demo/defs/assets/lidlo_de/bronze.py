@@ -8,10 +8,9 @@ from dagster_demo.defs.resources.freshness_policy import daily_policy
 
 
 @dg.asset(
-    io_manager_key="bronze_polars_parquet_io_manager",
+    io_manager_key="bronze_polars_delta_append_io_manager",
     group_name=cfg.RETAILER_NAME,
     metadata={
-        "delta_write_options": {"schema_mode": "merge"},
         "ssid": cfg.RETAILER_ID,
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,
@@ -19,7 +18,7 @@ from dagster_demo.defs.resources.freshness_policy import daily_policy
     },
     kinds={"polars", "deltalake", "bronze"},
     freshness_policy=daily_policy,
-)  # type: ignore[call-overload]
+)
 def lidlo_de_bronze_day_fact(context: dg.AssetExecutionContext) -> pl.LazyFrame:
     """Lidlo Germany shares a new file with many dates in one file."""
     df = pl.scan_parquet(cfg.DIRECTORY)

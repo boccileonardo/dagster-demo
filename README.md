@@ -5,10 +5,11 @@ Event-driven ETL of retailer point-of-sale data through Polars (small data), Pys
 ### Quick Start
 ```sh
 cd ~
+mkdir repos && cd repos
 git clone https://github.com/boccileonardo/dagster-demo.git
 cd dagster-demo
 mkdir .dagster_home
-echo 'export DAGSTER_HOME="~/dagster-demo/.dagster_home"' >> ~/.bashrc
+echo 'export DAGSTER_HOME="~/repos/dagster-demo/.dagster_home"' >> ~/.bashrc
 ```
 Restart shell
 ```sh

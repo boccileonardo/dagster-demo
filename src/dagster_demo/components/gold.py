@@ -46,7 +46,9 @@ def gold_prod_dim_processing(
         assets=assets,
         data_provider_code=context.partition_key,
     )
-    add_materialization_metadata(context=context, df=df, count_rows=False)
+    add_materialization_metadata(
+        context=context, df=df, count_rows=False, count_ids_in_col="prod_id"
+    )
     return df
 
 
@@ -65,7 +67,9 @@ def gold_site_dim_processing(
         assets=assets,
         data_provider_code=context.partition_key,
     )
-    add_materialization_metadata(context=context, df=df, count_rows=False)
+    add_materialization_metadata(
+        context=context, df=df, count_rows=False, count_ids_in_col="site_id"
+    )
     return df
 
 

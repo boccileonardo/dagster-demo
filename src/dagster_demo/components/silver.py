@@ -67,7 +67,9 @@ def silver_prod_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFra
             pl.col("data_provider_code").str.strip_chars_start("cds_"), "prod_id"
         ).cast(pl.Int32)
     )
-    add_materialization_metadata(context=context, df=df, count_rows=False)
+    add_materialization_metadata(
+        context=context, df=df, count_rows=False, count_ids_in_col="prod_id"
+    )
     return df
 
 
@@ -90,7 +92,9 @@ def silver_site_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFra
             pl.col("data_provider_code").str.strip_chars_start("cds_"), "site_id"
         ).cast(pl.Int32)
     )
-    add_materialization_metadata(context=context, df=df, count_rows=False)
+    add_materialization_metadata(
+        context=context, df=df, count_rows=False, count_ids_in_col="site_id"
+    )
     return df
 
 

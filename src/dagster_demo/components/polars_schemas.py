@@ -23,6 +23,8 @@ prod_dim_pl_schema: dict[str, pl.DataType] = {
     "corp_subcategory": pl.String(),
     "corp_category": pl.String(),
     "corp_item_description": pl.String(),
+    # Hold non standard retailer columns
+    "extra_attributes": pl.Struct({}),
 }
 
 prod_dim_required_cols: list[str] = [
@@ -63,6 +65,8 @@ site_dim_pl_schema: dict[str, pl.DataType] = {
     "corp_state": pl.String(),
     "corp_county": pl.String(),
     "corp_country": pl.String(),
+    # Hold non standard retailer columns
+    "extra_attributes": pl.Struct({}),
 }
 
 site_dim_required_cols: list[str] = [
@@ -95,6 +99,8 @@ store_fact_pl_schema: dict[str, pl.DataType] = {
     "inventory_qty_on_order": pl.Int64(),
     "inventory_value_on_hand_usd": pl.Float64(),
     "inventory_value_on_hand_lc": pl.Float64(),
+    # Hold non standard retailer columns
+    "extra_attributes": pl.Struct({}),
 }
 
 store_fact_required_cols: list[str] = [

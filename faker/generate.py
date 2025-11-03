@@ -51,6 +51,23 @@ def random_subcategory():
     )
 
 
+def random_package_material():
+    return random.choice(["PET", "HDPE", "Cardboard", "Glass", "Aluminum", "PLA"])
+
+
+def random_brand_tier():
+    return random.choice(["Value", "Mainstream", "Premium", "Ultra-Premium"])
+
+
+def random_shelf_life_days():
+    return random.choice([30, 60, 90, 180, 365, 730])
+
+
+def random_num_components():
+    # For bundled products (e.g., multi-pack razors + blades)
+    return random.randint(1, 12)
+
+
 def random_gtin():
     return str(fake.unique.ean(length=13))
 
@@ -77,6 +94,45 @@ def random_date(start_year=2024, end_year=2025):
     )
 
 
+def random_format_subtype():
+    return random.choice(
+        [
+            "Urban Compact",
+            "Suburban Large",
+            "High Street",
+            "Mall Anchor",
+            "Outlet",
+            "Airport",
+        ]
+    )
+
+
+def random_lease_type():
+    return random.choice(["Owned", "Leased", "Franchise", "Joint-Venture"])
+
+
+def random_square_footage():
+    return random.randint(800, 120000)
+
+
+def random_parking_spaces():
+    return random.randint(0, 800)
+
+
+def random_manager_name():
+    return fake.name()
+
+
+def random_store_opening_date():
+    return fake.date_between(
+        start_date=datetime(2000, 1, 1), end_date=datetime(2025, 1, 1)
+    )
+
+
+def random_micro_fulfillment_enabled():
+    return random.choice(["Y", "N"])
+
+
 # --- Record generators ---
 def generate_sales_record(date, store, product, partial=False):
     base = {
@@ -95,6 +151,18 @@ def generate_sales_record(date, store, product, partial=False):
                 ),
                 "return_amount": random.randint(0, 5),
                 "return_value_local_currency": round(random.uniform(0, 50), 2),
+                # uncommon retailer metrics
+                "units_shipped_to_store": random.randint(0, 60),
+                "promo_flag": random.choice(["Y", "N"]),
+                "markdown_pct": round(
+                    random.uniform(0, 0.6), 2
+                ),  # fraction of price discounted
+                "waste_qty": random.randint(0, 3),  # damaged or expired units
+                "on_display_qty": random.randint(0, 20),  # units on special display
+                "ominchannel_order_qty": random.randint(
+                    0, 10
+                ),  # online orders fulfilled by store (deliberate uncommon spelling)
+                "forecast_sales_qty": max(0, int(random.gauss(base["sales_qty"], 5))),
             }
         )
     else:
@@ -102,6 +170,9 @@ def generate_sales_record(date, store, product, partial=False):
             {
                 "sales_value_usd": round(base["sales_qty"] * base["price"], 2),
                 # No return fields
+                # lighter uncommon metrics subset
+                "promo_flag": random.choice(["Y", "N"]),
+                "markdown_pct": round(random.uniform(0, 0.5), 2),
             }
         )
     # remove price column
@@ -129,6 +200,14 @@ def generate_inventory_record(date, store, product, partial=False):
                     * random.uniform(1.0, 100.0),
                     2,
                 ),
+                # uncommon inventory metrics
+                "safety_stock_qty": random.randint(0, 50),
+                "cycle_count_variance_qty": random.randint(-5, 5),
+                "inventory_accuracy_pct": round(random.uniform(0.85, 1.0), 3),
+                "days_of_supply": round(random.uniform(0, 60), 1),
+                "shrinkage_qty": random.randint(0, 4),  # theft/damage loss
+                "reserved_qty_for_online": random.randint(0, 30),
+                "backroom_qty": random.randint(0, 120),
             }
         )
     else:
@@ -137,6 +216,9 @@ def generate_inventory_record(date, store, product, partial=False):
                 "value_on_hand": round(
                     base["inventory_qty"] * random.uniform(1.0, 100.0), 2
                 ),
+                # partial subset of uncommon metrics
+                "safety_stock_qty": random.randint(0, 40),
+                "inventory_accuracy_pct": round(random.uniform(0.8, 1.0), 3),
             }
         )
     return base
@@ -156,12 +238,22 @@ def generate_product(name, partial=False):
                 "launch_date": str(random_date()),
                 "GTIN": random_gtin(),
                 "description": fake.catch_phrase(),
+                # uncommon product dimension attributes
+                "logo_present_on_pack": random.choice(["Y", "N"]),
+                "package_material": random_package_material(),
+                "shelf_life_days": random_shelf_life_days(),
+                "is_bundle": random.choice(["Y", "N"]),
+                "brand_marketing_tier": random_brand_tier(),
+                "num_components": random_num_components(),
             }
         )
     else:
         base.update(
             {
                 "GTIN": random_gtin(),
+                # partial subset of uncommon attributes
+                "logo_present_on_pack": random.choice(["Y", "N"]),
+                "package_material": random_package_material(),
             }
         )
     return base
@@ -181,6 +273,14 @@ def generate_store(name, partial=False):
                 "latitude": random_lat(),
                 "longitude": random_lon(),
                 "global_location_number": random_location_number(),
+                # uncommon store dimension attributes
+                "store_manager_name": random_manager_name(),
+                "store_opening_date": str(random_store_opening_date()),
+                "format_subtype": random_format_subtype(),
+                "store_square_footage": random_square_footage(),
+                "lease_type": random_lease_type(),
+                "parking_spaces": random_parking_spaces(),
+                "micro_fulfillment_enabled": random_micro_fulfillment_enabled(),
             }
         )
     else:
@@ -188,6 +288,9 @@ def generate_store(name, partial=False):
             {
                 "address": random_address(),
                 "channel": random_channel(),
+                # partial subset
+                "format_subtype": random_format_subtype(),
+                "lease_type": random_lease_type(),
             }
         )
     return base
@@ -271,6 +374,29 @@ def single_file_many_dates(file_format="parquet"):
     product_name_to_row = {row["product"]: row for row in df_products.to_dicts()}
     store_name_to_row = {row["store"]: row for row in df_stores.to_dicts()}
     records = []
+    barebones_allowed_keys = {
+        "date",
+        "store",
+        "product",
+        "sales_qty",
+        "sales_value_usd",
+        "sales_value_local_currency",
+        "return_amount",
+        "return_value_local_currency",
+        # product dimension original attributes
+        "category",
+        "sector",
+        "launch_date",
+        "GTIN",
+        "description",
+        # store dimension original attributes
+        "city",
+        "address",
+        "channel",
+        "latitude",
+        "longitude",
+        "global_location_number",
+    }
     for date in DATES:
         for store in STORES:
             for product in PRODUCTS:
@@ -278,7 +404,9 @@ def single_file_many_dates(file_format="parquet"):
                 # Merge all product/store attributes into the record
                 rec.update(product_name_to_row[product])
                 rec.update(store_name_to_row[store])
-                records.append(rec)
+                # Prune any newly added uncommon columns (fact + dimension)
+                pruned = {k: v for k, v in rec.items() if k in barebones_allowed_keys}
+                records.append(pruned)
     df = pl.DataFrame(records)
     write_df(df, f"{out_dir}/all_dates.{file_format}", file_format)
     return df_products, df_stores
@@ -327,6 +455,10 @@ def daily_files(file_format="parquet"):
                 rec = generate_sales_record(date, store, product, partial=True)
                 rec["product_id"] = product_name_to_id[product]
                 rec["store_id"] = store_name_to_id[store]
+                # Remove uncommon partial sales columns for barebones daily feed
+                for drop_key in ["promo_flag", "markdown_pct"]:
+                    if drop_key in rec:
+                        del rec[drop_key]
                 records.append(rec)
         df = pl.DataFrame(records)
         write_df(

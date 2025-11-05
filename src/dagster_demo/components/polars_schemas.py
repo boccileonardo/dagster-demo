@@ -24,7 +24,7 @@ prod_dim_pl_schema: dict[str, pl.DataType] = {
     "corp_category": pl.String(),
     "corp_item_description": pl.String(),
     # Hold non standard retailer columns
-    "source_extra_attributes": pl.Struct({}),
+    "extra_attributes": pl.Struct({}),
 }
 
 prod_dim_required_cols: list[str] = [
@@ -45,7 +45,7 @@ site_dim_pl_schema: dict[str, pl.DataType] = {
     "data_provider_code": pl.String(),
     "secure_group_key": pl.Int32(),
     # Nullable columns
-    "global_location_number": pl.Int64(),
+    "source_global_location_number": pl.Int64(),
     "source_site_name": pl.String(),
     "source_address": pl.String(),
     "source_channel": pl.String(),
@@ -66,7 +66,7 @@ site_dim_pl_schema: dict[str, pl.DataType] = {
     "corp_county": pl.String(),
     "corp_country": pl.String(),
     # Hold non standard retailer columns
-    "source_extra_attributes": pl.Struct({}),
+    "extra_attributes": pl.Struct({}),
 }
 
 site_dim_required_cols: list[str] = [
@@ -100,7 +100,7 @@ store_fact_pl_schema: dict[str, pl.DataType] = {
     "inventory_value_on_hand_usd": pl.Float64(),
     "inventory_value_on_hand_lc": pl.Float64(),
     # Hold non standard retailer columns
-    "source_extra_attributes": pl.Struct({}),
+    "extra_attributes": pl.Struct({}),
 }
 
 store_fact_required_cols: list[str] = [

@@ -24,10 +24,17 @@ def gold_store_month_fact(
     context: dg.AssetExecutionContext,
     lidlo_de_silver_month_fact: pl.LazyFrame,
     carretwo_fr_silver_month_fact: pl.LazyFrame,
+    targetto_us_silver_month_fact: pl.LazyFrame,
 ) -> pl.LazyFrame:
     """Union silver assets and partition by retailer."""
     df = gold_store_fact_processing(
-        context, [lidlo_de_silver_month_fact, carretwo_fr_silver_month_fact], "month"
+        context,
+        [
+            lidlo_de_silver_month_fact,
+            carretwo_fr_silver_month_fact,
+            targetto_us_silver_month_fact,
+        ],
+        "month",
     )
     return df
 

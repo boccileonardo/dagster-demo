@@ -34,12 +34,12 @@ def prefix_cols(df: pl.LazyFrame, prefix: str, exclude: list[str] = []):
 
 def load_product_master_data():
     df = pl.scan_parquet("faker/data/corporate_product_master_data.parquet")
-    return prefix_cols(df, "corp")
+    return prefix_cols(df, prefix="corp")
 
 
 def load_site_master_data():
     df = pl.scan_parquet("faker/data/corporate_site_master_data.parquet")
-    return prefix_cols(df, "corp", ["global_location_number"])
+    return prefix_cols(df, prefix="corp")
 
 
 def column_name_is_in_data_model(table: str, col_name) -> bool:
@@ -67,7 +67,7 @@ def silver_fact_processing(context: dg.AssetExecutionContext, df: pl.LazyFrame):
 
 def silver_prod_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFrame):
     df = df.unique(subset=["prod_id"])
-    df = prefix_cols(df, "source")
+    df = prefix_cols(df, prefix="source", exclude=["extra_attributes"])
     if "source_item_gtin" in df.collect_schema().names():
         logger.info("Joining with corporate product master on GTIN.")
         master = load_product_master_data()
@@ -94,12 +94,13 @@ def silver_prod_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFra
 
 def silver_site_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFrame):
     df = df.unique(subset=["site_id"])
-    df = prefix_cols(df, "source", ["global_location_number"])
-    if "global_location_number" in df.collect_schema().names():
+    df = prefix_cols(df, prefix="source", exclude=["extra_attributes"])
+    if "source_global_location_number" in df.collect_schema().names():
         master = load_site_master_data()
         df = df.join(
             master,
-            on="global_location_number",
+            left_on="source_global_location_number",
+            right_on="corp_global_location_number",
             how="left",
         )
     else:

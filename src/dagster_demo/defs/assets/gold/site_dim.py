@@ -24,10 +24,16 @@ def gold_site_dim(
     context: dg.AssetExecutionContext,
     lidlo_de_silver_site_dim: pl.LazyFrame,
     carretwo_fr_silver_site_dim: pl.LazyFrame,
+    targetto_us_silver_site_dim: pl.LazyFrame,
 ) -> pl.LazyFrame:
     """Union silver assets and partition by retailer."""
     df = gold_site_dim_processing(
-        context, [lidlo_de_silver_site_dim, carretwo_fr_silver_site_dim]
+        context,
+        [
+            lidlo_de_silver_site_dim,
+            carretwo_fr_silver_site_dim,
+            targetto_us_silver_site_dim,
+        ],
     )
     return df
 

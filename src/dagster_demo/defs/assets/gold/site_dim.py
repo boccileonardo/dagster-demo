@@ -3,7 +3,8 @@ import polars as pl
 from dagster_demo.components.gold import gold_site_dim_processing
 
 from dagster_demo.components.polars_schemas import (
-    site_dim_pl_schema,
+    gold_site_dim_pl_schema,
+    site_dim_required_cols,
     check_polars_schema,
 )
 from dagster_demo.defs.partitions import data_provider_partitions
@@ -48,8 +49,8 @@ def gold_site_dim_schema_check(
     """
     check_results = check_polars_schema(
         df_schema=gold_site_dim.collect_schema(),
-        expected_schema=site_dim_pl_schema,
-        required_cols_list=site_dim_pl_schema.keys(),
+        expected_schema=gold_site_dim_pl_schema,
+        required_cols_list=site_dim_required_cols,
     )
     return dg.AssetCheckResult(passed=check_results["passed"], metadata=check_results)
 

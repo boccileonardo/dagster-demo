@@ -115,6 +115,23 @@ store_fact_required_cols: list[str] = [
 ]
 
 
+# Gold layer schemas - extra_attributes converted to JSON string in gold
+gold_prod_dim_pl_schema: dict[str, pl.DataType] = {
+    **{k: v for k, v in prod_dim_pl_schema.items() if k != "extra_attributes"},
+    "extra_attributes": pl.String(),
+}
+
+gold_site_dim_pl_schema: dict[str, pl.DataType] = {
+    **{k: v for k, v in site_dim_pl_schema.items() if k != "extra_attributes"},
+    "extra_attributes": pl.String(),
+}
+
+gold_store_fact_pl_schema: dict[str, pl.DataType] = {
+    **{k: v for k, v in store_fact_pl_schema.items() if k != "extra_attributes"},
+    "extra_attributes": pl.String(),
+}
+
+
 def check_polars_schema(
     df_schema: pl.Schema, expected_schema: dict, required_cols_list: Iterable[str]
 ):

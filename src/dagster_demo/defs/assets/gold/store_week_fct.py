@@ -4,7 +4,8 @@ from dagster_demo.components.gold import gold_store_fact_processing
 from dagster_demo.defs.partitions import data_provider_partitions
 
 from dagster_demo.components.polars_schemas import (
-    store_fact_pl_schema,
+    gold_store_fact_pl_schema,
+    store_fact_required_cols,
     check_polars_schema,
 )
 
@@ -49,8 +50,8 @@ def gold_store_month_fact_schema_check(
     """
     check_results = check_polars_schema(
         df_schema=gold_store_week_fact.collect_schema(),
-        expected_schema=store_fact_pl_schema,
-        required_cols_list=store_fact_pl_schema.keys(),
+        expected_schema=gold_store_fact_pl_schema,
+        required_cols_list=store_fact_required_cols,
     )
     return dg.AssetCheckResult(passed=check_results["passed"], metadata=check_results)
 

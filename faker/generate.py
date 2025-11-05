@@ -1,3 +1,6 @@
+"""Script used to generate fake data, simulating the diverse ways that retailers can send store sales and inventory facts and product and store dimensions.
+Some will send a single file, others a star schema, some will send extra columns, some a basic set, etc."""
+
 import os
 import shutil
 import random
@@ -28,6 +31,11 @@ END_DATE = datetime.today()
 DATES = generate_uniform_dates(START_DATE, END_DATE, missing_prob=0.05)
 PRODUCTS = [fake.name() for _ in range(200)]
 STORES = [f"Store_{i:03d}" for i in range(1, 50)]
+
+# --- ID Mappings ---
+# Create consistent product and store IDs for all functions
+PRODUCT_IDS = {product: idx for idx, product in enumerate(PRODUCTS)}
+STORE_IDS = {store: idx for idx, store in enumerate(STORES)}
 
 
 # --- Additional attribute generators ---
@@ -317,6 +325,8 @@ def one_big_table(file_format="parquet"):
     os.makedirs(out_dir, exist_ok=True)
     records = [
         {
+            "product_id": PRODUCT_IDS[product],
+            "store_id": STORE_IDS[store],
             **generate_sales_record(date, store, product, partial=True),
             **generate_inventory_record(date, store, product, partial=True),
         }
@@ -378,6 +388,8 @@ def single_file_many_dates(file_format="parquet"):
         "date",
         "store",
         "product",
+        "product_id",
+        "store_id",
         "sales_qty",
         "sales_value_usd",
         "sales_value_local_currency",
@@ -401,6 +413,9 @@ def single_file_many_dates(file_format="parquet"):
         for store in STORES:
             for product in PRODUCTS:
                 rec = generate_sales_record(date, store, product, partial=False)
+                # Add IDs
+                rec["product_id"] = PRODUCT_IDS[product]
+                rec["store_id"] = STORE_IDS[store]
                 # Merge all product/store attributes into the record
                 rec.update(product_name_to_row[product])
                 rec.update(store_name_to_row[store])
@@ -428,6 +443,9 @@ def files_per_store(file_format="parquet"):
         for date in DATES:
             for product in PRODUCTS:
                 rec = generate_inventory_record(date, store, product, partial=False)
+                # Add IDs
+                rec["product_id"] = PRODUCT_IDS[product]
+                rec["store_id"] = STORE_IDS[store]
                 # Merge all product/store attributes into the record
                 rec.update(product_name_to_row[product])
                 rec.update(store_name_to_row[store])
@@ -446,15 +464,13 @@ def daily_files(file_format="parquet"):
     df_stores = pl.DataFrame(
         [generate_store(name=store, partial=False) for store in STORES]
     ).with_row_index("store_id")
-    product_name_to_id = dict(zip(df_products["product"], df_products["product_id"]))
-    store_name_to_id = dict(zip(df_stores["store"], df_stores["store_id"]))
     for date in DATES:
         records = []
         for store in STORES:
             for product in PRODUCTS:
                 rec = generate_sales_record(date, store, product, partial=True)
-                rec["product_id"] = product_name_to_id[product]
-                rec["store_id"] = store_name_to_id[store]
+                rec["product_id"] = PRODUCT_IDS[product]
+                rec["store_id"] = STORE_IDS[store]
                 # Remove uncommon partial sales columns for barebones daily feed
                 for drop_key in ["promo_flag", "markdown_pct"]:
                     if drop_key in rec:
@@ -485,6 +501,9 @@ def weekly_files_single_date(file_format="parquet"):
         for store in STORES:
             for product in PRODUCTS:
                 rec = generate_sales_record(week_end, store, product, partial=False)
+                # Add IDs
+                rec["product_id"] = PRODUCT_IDS[product]
+                rec["store_id"] = STORE_IDS[store]
                 # Merge all product/store attributes into the record
                 rec.update(product_name_to_row[product])
                 rec.update(store_name_to_row[store])
@@ -507,8 +526,6 @@ def weekly_files_all_days(file_format="parquet"):
     df_stores = pl.DataFrame(
         [generate_store(name=store, partial=False) for store in STORES]
     ).with_row_index("store_id")
-    product_name_to_id = dict(zip(df_products["product"], df_products["product_id"]))
-    store_name_to_id = dict(zip(df_stores["store"], df_stores["store_id"]))
     for i in range(0, len(DATES), 7):
         week_dates = DATES[i : i + 7]
         records = []
@@ -516,8 +533,8 @@ def weekly_files_all_days(file_format="parquet"):
             for store in STORES:
                 for product in PRODUCTS:
                     rec = generate_sales_record(date, store, product, partial=True)
-                    rec["product_id"] = product_name_to_id[product]
-                    rec["store_id"] = store_name_to_id[store]
+                    rec["product_id"] = PRODUCT_IDS[product]
+                    rec["store_id"] = STORE_IDS[store]
                     records.append(rec)
         if records:
             week_end = week_dates[0]

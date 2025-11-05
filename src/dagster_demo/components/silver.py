@@ -6,6 +6,10 @@ from dagster_demo.components.logger import logger
 from dagster_demo.components.output_metadata import add_materialization_metadata
 from dagster_demo.components.bronze import add_ingestion_metadata
 from dagster_demo.components.polars_schemas import (
+    prod_dim_pl_schema,
+    site_dim_pl_schema,
+)
+from dagster_demo.components.polars_schemas import (
     prod_dim_required_cols,
     site_dim_required_cols,
     store_fact_required_cols,
@@ -38,6 +42,21 @@ def load_site_master_data():
     return prefix_cols(df, "corp", ["global_location_number"])
 
 
+def column_name_is_in_data_model(table: str, col_name) -> bool:
+    """Ensure the column name that is being mapped as non-standard is (not) in the data model.
+    Guards against schema evolution (promoted fields from extra_attributes)."""
+    match table:
+        case "store_fact":
+            return col_name in site_dim_pl_schema
+        case "prod_dim":
+            return col_name in prod_dim_pl_schema
+        case "site_dim":
+            return col_name in site_dim_pl_schema
+        case _:
+            # add table support to this function if hitting this error
+            raise NotImplementedError("This table is not yet supported for validation.")
+
+
 def silver_fact_processing(context: dg.AssetExecutionContext, df: pl.LazyFrame):
     df = df.unique()  # deduplication of bronze data
     add_materialization_metadata(
@@ -65,7 +84,7 @@ def silver_prod_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFra
     df = df.with_columns(
         prod_id=pl.concat_str(
             pl.col("data_provider_code").str.strip_chars_start("cds_"), "prod_id"
-        ).cast(pl.Int32)
+        ).cast(pl.Int64)
     )
     add_materialization_metadata(
         context=context, df=df, count_rows=False, count_ids_in_col="prod_id"
@@ -90,7 +109,7 @@ def silver_site_dim_processing(context: dg.AssetExecutionContext, df: pl.LazyFra
     df = df.with_columns(
         site_id=pl.concat_str(
             pl.col("data_provider_code").str.strip_chars_start("cds_"), "site_id"
-        ).cast(pl.Int32)
+        ).cast(pl.Int64)
     )
     add_materialization_metadata(
         context=context, df=df, count_rows=False, count_ids_in_col="site_id"

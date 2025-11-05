@@ -27,8 +27,8 @@ def carretwo_fr_silver_day_fact(
 ) -> pl.LazyFrame:
     df = carretwo_fr_bronze_day_fact.select(
         pl.col("date").str.to_date("%Y-%m-%d").alias("time_period_end_date"),
-        pl.col("product_id").cast(pl.Int32).alias("prod_id"),
-        pl.col("store_id").cast(pl.Int32).alias("site_id"),
+        pl.col("product_id").cast(pl.Int64).alias("prod_id"),
+        pl.col("store_id").cast(pl.Int64).alias("site_id"),
         pl.col("sales_qty").cast(pl.Int64).alias("pos_sales_units"),
         pl.col("sales_value_usd").cast(pl.Float64).alias("pos_sales_value_usd"),
         pl.col("secure_group_key"),
@@ -58,7 +58,7 @@ def carretwo_fr_silver_prod_dim(
     context: dg.AssetExecutionContext, carretwo_fr_bronze_day_fact: pl.LazyFrame
 ) -> pl.LazyFrame:
     df = carretwo_fr_bronze_day_fact.select(
-        pl.col("product_id").cast(pl.Int32).alias("prod_id"),
+        pl.col("product_id").cast(pl.Int64).alias("prod_id"),
         pl.col("product").alias("prod_name"),
         pl.col("secure_group_key"),
         pl.col("created_at_utc_datetime"),
@@ -87,7 +87,7 @@ def carretwo_fr_silver_site_dim(
     context: dg.AssetExecutionContext, carretwo_fr_bronze_day_fact: pl.LazyFrame
 ) -> pl.LazyFrame:
     df = carretwo_fr_bronze_day_fact.select(
-        pl.col("store_id").cast(pl.Int32).alias("site_id"),
+        pl.col("store_id").cast(pl.Int64).alias("site_id"),
         pl.col("store").alias("site_name"),
         pl.col("secure_group_key"),
         pl.col("created_at_utc_datetime"),

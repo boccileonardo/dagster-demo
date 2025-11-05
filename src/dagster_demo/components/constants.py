@@ -13,4 +13,10 @@ RETAILER_CONFIG = {
         "region": "Europe",
         "country": "Germany",
     },
+    1003: {
+        "name": "targetto_us",
+        "sgk": 110013,
+        "region": "North America",
+        "country": "United States",
+    },
 }

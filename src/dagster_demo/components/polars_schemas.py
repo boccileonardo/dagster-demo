@@ -3,7 +3,7 @@ from typing import Iterable
 
 prod_dim_pl_schema: dict[str, pl.DataType] = {
     # Required columns
-    "prod_id": pl.Int32(),
+    "prod_id": pl.Int64(),
     "created_at_utc_datetime": pl.Datetime(time_unit="us", time_zone="UTC"),
     "created_at_date": pl.Date(),
     "data_source": pl.String(),
@@ -24,7 +24,7 @@ prod_dim_pl_schema: dict[str, pl.DataType] = {
     "corp_category": pl.String(),
     "corp_item_description": pl.String(),
     # Hold non standard retailer columns
-    "extra_attributes": pl.Struct({}),
+    "source_extra_attributes": pl.Struct({}),
 }
 
 prod_dim_required_cols: list[str] = [
@@ -38,7 +38,7 @@ prod_dim_required_cols: list[str] = [
 
 site_dim_pl_schema: dict[str, pl.DataType] = {
     # Required columns
-    "site_id": pl.Int32(),
+    "site_id": pl.Int64(),
     "created_at_utc_datetime": pl.Datetime(time_unit="us", time_zone="UTC"),
     "created_at_date": pl.Date(),
     "data_source": pl.String(),
@@ -66,7 +66,7 @@ site_dim_pl_schema: dict[str, pl.DataType] = {
     "corp_county": pl.String(),
     "corp_country": pl.String(),
     # Hold non standard retailer columns
-    "extra_attributes": pl.Struct({}),
+    "source_extra_attributes": pl.Struct({}),
 }
 
 site_dim_required_cols: list[str] = [
@@ -81,8 +81,8 @@ site_dim_required_cols: list[str] = [
 store_fact_pl_schema: dict[str, pl.DataType] = {
     # Required columns
     "time_period_end_date": pl.Date(),
-    "prod_id": pl.Int32(),
-    "site_id": pl.Int32(),
+    "prod_id": pl.Int64(),
+    "site_id": pl.Int64(),
     "created_at_utc_datetime": pl.Datetime(time_unit="us", time_zone="UTC"),
     "created_at_date": pl.Date(),
     "data_source": pl.String(),
@@ -100,7 +100,7 @@ store_fact_pl_schema: dict[str, pl.DataType] = {
     "inventory_value_on_hand_usd": pl.Float64(),
     "inventory_value_on_hand_lc": pl.Float64(),
     # Hold non standard retailer columns
-    "extra_attributes": pl.Struct({}),
+    "source_extra_attributes": pl.Struct({}),
 }
 
 store_fact_required_cols: list[str] = [
@@ -134,7 +134,19 @@ def check_polars_schema(
     for col in allowed_names & actual_names:
         expected_type = expected_schema[col]
         actual_type = df_schema[col]
-        if actual_type != expected_type:
+
+        # Special handling for Struct types: if expected is an empty Struct,
+        # only validate that actual is also a Struct (ignore field differences)
+        if isinstance(expected_type, pl.Struct) and len(expected_type.fields) == 0:
+            if not isinstance(actual_type, pl.Struct):
+                type_mismatches.append(
+                    {
+                        "col": col,
+                        "expected": str(expected_type),
+                        "actual": str(actual_type),
+                    }
+                )
+        elif actual_type != expected_type:
             type_mismatches.append(
                 {"col": col, "expected": str(expected_type), "actual": str(actual_type)}
             )

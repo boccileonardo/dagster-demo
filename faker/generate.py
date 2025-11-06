@@ -547,6 +547,132 @@ def weekly_files_all_days(file_format="parquet"):
     return df_products, df_stores
 
 
+def daily_full_refresh_dim_fact(file_format="parquet"):
+    out_dir = os.path.join(DATA_DIR, "daily_full_refresh_dim_fact")
+    os.makedirs(out_dir, exist_ok=True)
+
+    df_products = None
+    df_stores = None
+
+    for date in DATES:
+        date_str = date.strftime("%Y%m%d")
+
+        # Full dimension refresh - all products and stores every day
+        df_products = pl.DataFrame(
+            [generate_product(name=product, partial=False) for product in PRODUCTS]
+        ).with_row_index("id")
+        df_stores = pl.DataFrame(
+            [generate_store(name=store, partial=False) for store in STORES]
+        ).with_row_index("id")
+
+        products_in_dim = df_products["id"].to_list()
+        stores_in_dim = df_stores["id"].to_list()
+
+        # Incremental fact data - only this date
+        records = [
+            generate_sales_record(date, store_id, product_id, partial=True)
+            for store_id in stores_in_dim
+            for product_id in products_in_dim
+        ]
+        df_fact = pl.DataFrame(records)
+
+        write_df(
+            df_products, f"{out_dir}/dim_products_{date_str}.{file_format}", file_format
+        )
+        write_df(
+            df_stores, f"{out_dir}/dim_stores_{date_str}.{file_format}", file_format
+        )
+        write_df(df_fact, f"{out_dir}/fact_sales_{date_str}.{file_format}", file_format)
+
+    return df_products, df_stores
+
+
+def daily_true_incremental_dim_fact(file_format="parquet"):
+    out_dir = os.path.join(DATA_DIR, "daily_true_incremental_dim_fact")
+    os.makedirs(out_dir, exist_ok=True)
+
+    # Track which products and stores have been sent
+    sent_products = set()
+    sent_stores = set()
+
+    # Distribute products and stores across dates
+    products_per_day = len(PRODUCTS) // len(DATES) + 1
+    stores_per_day = len(STORES) // len(DATES) + 1
+
+    df_products_last = None
+    df_stores_last = None
+
+    for date_idx, date in enumerate(DATES):
+        date_str = date.strftime("%Y%m%d")
+
+        # Determine new products and stores for this day
+        start_product_idx = date_idx * products_per_day
+        end_product_idx = min((date_idx + 1) * products_per_day, len(PRODUCTS))
+        new_products = PRODUCTS[start_product_idx:end_product_idx]
+
+        start_store_idx = date_idx * stores_per_day
+        end_store_idx = min((date_idx + 1) * stores_per_day, len(STORES))
+        new_stores = STORES[start_store_idx:end_store_idx]
+
+        # Generate dimension records only for new products/stores
+        if new_products:
+            product_records = [
+                generate_product(name=product, partial=False)
+                for product in new_products
+            ]
+            df_products = pl.DataFrame(product_records).with_columns(
+                pl.Series("id", [PRODUCT_IDS[p] for p in new_products], dtype=pl.UInt32)
+            )
+            # Reorder columns to match standard format (id first)
+            cols = df_products.columns
+            df_products = df_products.select(["id"] + [c for c in cols if c != "id"])
+            sent_products.update(new_products)
+            df_products_last = df_products
+        else:
+            df_products = pl.DataFrame(
+                schema=df_products_last.schema if df_products_last is not None else {}
+            )
+
+        if new_stores:
+            store_records = [
+                generate_store(name=store, partial=False) for store in new_stores
+            ]
+            df_stores = pl.DataFrame(store_records).with_columns(
+                pl.Series("id", [STORE_IDS[s] for s in new_stores], dtype=pl.UInt32)
+            )
+            # Reorder columns to match standard format (id first)
+            cols = df_stores.columns
+            df_stores = df_stores.select(["id"] + [c for c in cols if c != "id"])
+            sent_stores.update(new_stores)
+            df_stores_last = df_stores
+        else:
+            df_stores = pl.DataFrame(
+                schema=df_stores_last.schema if df_stores_last is not None else {}
+            )
+
+        # Generate fact data for ALL products and stores seen so far
+        # (retailers typically send facts for all known entities)
+        records = [
+            generate_sales_record(
+                date, STORE_IDS[store], PRODUCT_IDS[product], partial=True
+            )
+            for store in sent_stores
+            for product in sent_products
+        ]
+        df_fact = pl.DataFrame(records)
+
+        # Write files (even if dimensions are empty, to simulate the pattern)
+        write_df(
+            df_products, f"{out_dir}/dim_products_{date_str}.{file_format}", file_format
+        )
+        write_df(
+            df_stores, f"{out_dir}/dim_stores_{date_str}.{file_format}", file_format
+        )
+        write_df(df_fact, f"{out_dir}/fact_sales_{date_str}.{file_format}", file_format)
+
+    return df_products_last, df_stores_last
+
+
 def fake_corporate_product_master_data(all_products_dfs):
     all_products_dfs = [
         df.rename({"product_id": "id"}) if "product_id" in df.columns else df
@@ -610,6 +736,8 @@ if __name__ == "__main__":
         daily_files(),
         weekly_files_single_date(),
         weekly_files_all_days(),
+        daily_full_refresh_dim_fact(),
+        daily_true_incremental_dim_fact(),
     ]
 
     for prod_df, store_df in data_gens:

@@ -3,12 +3,17 @@ from typing import Iterable
 
 prod_dim_pl_schema: dict[str, pl.DataType] = {
     # Required columns
-    "prod_id": pl.Int64(),
+    "prod_id": pl.String(),
     "created_at_utc_datetime": pl.Datetime(time_unit="us", time_zone="UTC"),
     "created_at_date": pl.Date(),
     "data_source": pl.String(),
     "data_provider_code": pl.String(),
     "secure_group_key": pl.Int32(),
+    # SCD Type 2 columns
+    "prod_key": pl.Int64(),
+    "is_current": pl.Boolean(),
+    "valid_from": pl.Datetime(time_unit="us", time_zone="UTC"),
+    "valid_to": pl.Datetime(time_unit="us", time_zone="UTC"),
     # Nullable columns
     "source_prod_name": pl.String(),
     "source_sector": pl.String(),
@@ -28,22 +33,30 @@ prod_dim_pl_schema: dict[str, pl.DataType] = {
 }
 
 prod_dim_required_cols: list[str] = [
+    "prod_key",
     "prod_id",
     "created_at_utc_datetime",
     "created_at_date",
     "data_source",
     "data_provider_code",
     "secure_group_key",
+    "is_current",
+    "valid_from",
 ]
 
 site_dim_pl_schema: dict[str, pl.DataType] = {
     # Required columns
-    "site_id": pl.Int64(),
+    "site_id": pl.String(),
     "created_at_utc_datetime": pl.Datetime(time_unit="us", time_zone="UTC"),
     "created_at_date": pl.Date(),
     "data_source": pl.String(),
     "data_provider_code": pl.String(),
     "secure_group_key": pl.Int32(),
+    # SCD Type 2 columns
+    "site_key": pl.Int64(),
+    "is_current": pl.Boolean(),
+    "valid_from": pl.Datetime(time_unit="us", time_zone="UTC"),
+    "valid_to": pl.Datetime(time_unit="us", time_zone="UTC"),
     # Nullable columns
     "source_global_location_number": pl.Int64(),
     "source_site_name": pl.String(),
@@ -70,24 +83,30 @@ site_dim_pl_schema: dict[str, pl.DataType] = {
 }
 
 site_dim_required_cols: list[str] = [
+    "site_key",
     "site_id",
     "created_at_utc_datetime",
     "created_at_date",
     "data_source",
     "data_provider_code",
     "secure_group_key",
+    "is_current",
+    "valid_from",
 ]
 
 store_fact_pl_schema: dict[str, pl.DataType] = {
     # Required columns
     "time_period_end_date": pl.Date(),
-    "prod_id": pl.Int64(),
-    "site_id": pl.Int64(),
+    "prod_id": pl.String(),
+    "site_id": pl.String(),
     "created_at_utc_datetime": pl.Datetime(time_unit="us", time_zone="UTC"),
     "created_at_date": pl.Date(),
     "data_source": pl.String(),
     "data_provider_code": pl.String(),
     "secure_group_key": pl.Int32(),
+    # Surrogate keys from dimension tables
+    "prod_key": pl.Int64(),
+    "site_key": pl.Int64(),
     # Nullable columns
     "pos_sales_units": pl.Int64(),
     "pos_sales_value_usd": pl.Float64(),
@@ -112,6 +131,8 @@ store_fact_required_cols: list[str] = [
     "data_source",
     "data_provider_code",
     "secure_group_key",
+    "prod_key",
+    "site_key",
 ]
 
 

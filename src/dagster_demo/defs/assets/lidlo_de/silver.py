@@ -23,12 +23,15 @@ from dagster_demo.components.silver import (
     kinds={"polars", "deltalake", "silver"},
 )
 def lidlo_de_silver_day_fact(
-    context: dg.AssetExecutionContext, lidlo_de_bronze_day_fact: pl.LazyFrame
+    context: dg.AssetExecutionContext,
+    lidlo_de_bronze_day_fact: pl.LazyFrame,
+    lidlo_de_silver_prod_dim: pl.LazyFrame,
+    lidlo_de_silver_site_dim: pl.LazyFrame,
 ) -> pl.LazyFrame:
     df = lidlo_de_bronze_day_fact.select(
         pl.col("date").str.to_date("%Y-%m-%d").alias("time_period_end_date"),
-        pl.col("product_id").cast(pl.Int64).alias("prod_id"),
-        pl.col("store_id").cast(pl.Int64).alias("site_id"),
+        pl.col("product_id").alias("prod_id"),
+        pl.col("store_id").alias("site_id"),
         pl.col("sales_qty").cast(pl.Int64).alias("pos_sales_units"),
         pl.col("sales_value_usd").cast(pl.Float64).alias("pos_sales_value_usd"),
         pl.col("sales_value_local_currency")
@@ -44,7 +47,12 @@ def lidlo_de_silver_day_fact(
         pl.col("data_source"),
         pl.col("data_provider_code"),
     )
-    df = silver_fact_processing(context=context, df=df)
+    df = silver_fact_processing(
+        context=context,
+        df=df,
+        prod_dim=lidlo_de_silver_prod_dim,
+        site_dim=lidlo_de_silver_site_dim,
+    )
     return df
 
 
@@ -57,7 +65,7 @@ def lidlo_de_silver_day_fact(
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,
         "country": cfg.COUNTRY,
-        "merge_predicate": "s.prod_id = t.prod_id",
+        "merge_predicate": "s.prod_key = t.prod_key",
     },
     kinds={"polars", "deltalake", "silver"},
 )
@@ -65,7 +73,7 @@ def lidlo_de_silver_prod_dim(
     context: dg.AssetExecutionContext, lidlo_de_bronze_day_fact: pl.LazyFrame
 ) -> pl.LazyFrame:
     df = lidlo_de_bronze_day_fact.select(
-        pl.col("product_id").cast(pl.Int64).alias("prod_id"),
+        pl.col("product_id").alias("prod_id"),
         pl.col("product").alias("prod_name"),
         pl.col("category"),
         pl.col("sector"),
@@ -78,7 +86,11 @@ def lidlo_de_silver_prod_dim(
         pl.col("data_source"),
         pl.col("data_provider_code"),
     )
-    df = silver_prod_dim_processing(context=context, df=df)
+    df = silver_prod_dim_processing(
+        context=context,
+        incoming_dim=df,
+        scd_cols=cfg.PROD_DIM_SCD_COLS,
+    )
     return df
 
 
@@ -91,7 +103,7 @@ def lidlo_de_silver_prod_dim(
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,
         "country": cfg.COUNTRY,
-        "merge_predicate": "s.site_id = t.site_id",
+        "merge_predicate": "s.site_key = t.site_key",
     },
     kinds={"polars", "deltalake", "silver"},
 )
@@ -99,7 +111,7 @@ def lidlo_de_silver_site_dim(
     context: dg.AssetExecutionContext, lidlo_de_bronze_day_fact: pl.LazyFrame
 ) -> pl.LazyFrame:
     df = lidlo_de_bronze_day_fact.select(
-        pl.col("store_id").cast(pl.Int64).alias("site_id"),
+        pl.col("store_id").alias("site_id"),
         pl.col("store").alias("site_name"),
         pl.col("city"),
         pl.col("address"),
@@ -113,7 +125,11 @@ def lidlo_de_silver_site_dim(
         pl.col("data_source"),
         pl.col("data_provider_code"),
     )
-    df = silver_site_dim_processing(context=context, df=df)
+    df = silver_site_dim_processing(
+        context=context,
+        incoming_dim=df,
+        scd_cols=cfg.SITE_DIM_SCD_COLS,
+    )
     return df
 
 

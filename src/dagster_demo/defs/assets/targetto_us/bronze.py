@@ -22,7 +22,7 @@ from dagster_demo.defs.resources.freshness_policy import daily_policy
         "partition_expr": "date",
     },
     kinds={"polars", "deltalake", "bronze"},
-    partitions_def=dg.DailyPartitionsDefinition(start_date=datetime(2025, 1, 1)),
+    partitions_def=dg.DailyPartitionsDefinition(start_date=datetime(2025, 8, 8)),
     freshness_policy=daily_policy,
 )
 def targetto_us_bronze_day_fact(context: dg.AssetExecutionContext) -> pl.LazyFrame:

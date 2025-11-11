@@ -46,7 +46,6 @@ def sensor_carretwo_fr_bronze_day_fact(context: dg.SensorEvaluationContext):
     new_files = detect_new_files_in_dir(directory=cfg.DIRECTORY, context=context)
     if new_files:
         context.log.info(f"Found new files: {new_files}. Triggering run...")
-        # TODO: demo another retailer where only new files are processed
         yield dg.RunRequest()
     else:
         yield dg.SkipReason("No new files found")

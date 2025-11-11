@@ -23,12 +23,15 @@ from dagster_demo.components.silver import (
     kinds={"polars", "deltalake", "silver"},
 )
 def carretwo_fr_silver_day_fact(
-    context: dg.AssetExecutionContext, carretwo_fr_bronze_day_fact: pl.LazyFrame
+    context: dg.AssetExecutionContext,
+    carretwo_fr_bronze_day_fact: pl.LazyFrame,
+    carretwo_fr_silver_prod_dim: pl.LazyFrame,
+    carretwo_fr_silver_site_dim: pl.LazyFrame,
 ) -> pl.LazyFrame:
     df = carretwo_fr_bronze_day_fact.select(
         pl.col("date").str.to_date("%Y-%m-%d").alias("time_period_end_date"),
-        pl.col("product_id").cast(pl.Int64).alias("prod_id"),
-        pl.col("store_id").cast(pl.Int64).alias("site_id"),
+        pl.col("product_id").alias("prod_id"),
+        pl.col("store_id").alias("site_id"),
         pl.col("sales_qty").cast(pl.Int64).alias("pos_sales_units"),
         pl.col("sales_value_usd").cast(pl.Float64).alias("pos_sales_value_usd"),
         pl.col("secure_group_key"),
@@ -37,7 +40,12 @@ def carretwo_fr_silver_day_fact(
         pl.col("data_source"),
         pl.col("data_provider_code"),
     )
-    df = silver_fact_processing(context=context, df=df)
+    df = silver_fact_processing(
+        context=context,
+        df=df,
+        prod_dim=carretwo_fr_silver_prod_dim,
+        site_dim=carretwo_fr_silver_site_dim,
+    )
     return df
 
 
@@ -50,7 +58,7 @@ def carretwo_fr_silver_day_fact(
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,
         "country": cfg.COUNTRY,
-        "merge_predicate": "s.prod_id = t.prod_id",
+        "merge_predicate": "s.prod_key = t.prod_key",
     },
     kinds={"polars", "deltalake", "silver"},
 )
@@ -58,7 +66,7 @@ def carretwo_fr_silver_prod_dim(
     context: dg.AssetExecutionContext, carretwo_fr_bronze_day_fact: pl.LazyFrame
 ) -> pl.LazyFrame:
     df = carretwo_fr_bronze_day_fact.select(
-        pl.col("product_id").cast(pl.Int64).alias("prod_id"),
+        pl.col("product_id").alias("prod_id"),
         pl.col("product").alias("prod_name"),
         pl.col("secure_group_key"),
         pl.col("created_at_utc_datetime"),
@@ -66,7 +74,11 @@ def carretwo_fr_silver_prod_dim(
         pl.col("data_source"),
         pl.col("data_provider_code"),
     )
-    df = silver_prod_dim_processing(context=context, df=df)
+    df = silver_prod_dim_processing(
+        context=context,
+        incoming_dim=df,
+        scd_cols=cfg.PROD_DIM_SCD_COLS,
+    )
     return df
 
 
@@ -79,7 +91,7 @@ def carretwo_fr_silver_prod_dim(
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,
         "country": cfg.COUNTRY,
-        "merge_predicate": "s.site_id = t.site_id",
+        "merge_predicate": "s.site_key = t.site_key",
     },
     kinds={"polars", "deltalake", "silver"},
 )
@@ -95,7 +107,11 @@ def carretwo_fr_silver_site_dim(
         pl.col("data_source"),
         pl.col("data_provider_code"),
     )
-    df = silver_site_dim_processing(context=context, df=df)
+    df = silver_site_dim_processing(
+        context=context,
+        incoming_dim=df,
+        scd_cols=cfg.SITE_DIM_SCD_COLS,
+    )
     return df
 
 

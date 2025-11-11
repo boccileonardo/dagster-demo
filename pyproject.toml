@@ -6,6 +6,7 @@ dependencies = [
     "dagster>=1.10.18",
     "dagster-delta[polars]>=0.5.3",
     "patito>=0.8.3",
+    "polars-hash>=0.5.5",
     "polars[deltalake]>=1.30.0",
 ]
 

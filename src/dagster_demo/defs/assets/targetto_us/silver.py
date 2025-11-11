@@ -24,7 +24,10 @@ from dagster_demo.components.silver import (
     kinds={"polars", "deltalake", "silver"},
 )
 def targetto_us_silver_day_fact(
-    context: dg.AssetExecutionContext, targetto_us_bronze_day_fact: pl.LazyFrame
+    context: dg.AssetExecutionContext,
+    targetto_us_bronze_day_fact: pl.LazyFrame,
+    targetto_us_silver_prod_dim: pl.LazyFrame,
+    targetto_us_silver_site_dim: pl.LazyFrame,
 ) -> pl.LazyFrame:
     non_standard_fact_cols = [
         "safety_stock_qty",
@@ -42,8 +45,8 @@ def targetto_us_silver_day_fact(
             )
     df = targetto_us_bronze_day_fact.select(
         pl.col("date").str.to_date("%Y-%m-%d").alias("time_period_end_date"),
-        pl.col("product_id").cast(pl.Int64).alias("prod_id"),
-        pl.col("store_id").cast(pl.Int64).alias("site_id"),
+        pl.col("product_id").alias("prod_id"),
+        pl.col("store_id").alias("site_id"),
         pl.col("inventory_qty").cast(pl.Int64).alias("inventory_qty_on_hand"),
         pl.col("units_on_order").cast(pl.Int64).alias("inventory_qty_on_order"),
         pl.col("value_on_hand_usd")
@@ -62,7 +65,12 @@ def targetto_us_silver_day_fact(
             "extra_attributes"
         ),
     )
-    df = silver_fact_processing(context=context, df=df)
+    df = silver_fact_processing(
+        context=context,
+        df=df,
+        prod_dim=targetto_us_silver_prod_dim,
+        site_dim=targetto_us_silver_site_dim,
+    )
     return df
 
 
@@ -75,7 +83,7 @@ def targetto_us_silver_day_fact(
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,
         "country": cfg.COUNTRY,
-        "merge_predicate": "s.prod_id = t.prod_id",
+        "merge_predicate": "s.prod_key = t.prod_key",
     },
     kinds={"polars", "deltalake", "silver"},
 )
@@ -97,7 +105,7 @@ def targetto_us_silver_prod_dim(
                 f"Column {col} exists in the standard data model and should be mapped directly."
             )
     df = targetto_us_bronze_day_fact.select(
-        pl.col("product_id").cast(pl.Int64).alias("prod_id"),
+        pl.col("product_id").alias("prod_id"),
         pl.col("product").alias("prod_name"),
         pl.col("sector").alias("sector"),
         pl.col("category").alias("category"),
@@ -114,7 +122,11 @@ def targetto_us_silver_prod_dim(
             "extra_attributes"
         ),
     )
-    df = silver_prod_dim_processing(context=context, df=df)
+    df = silver_prod_dim_processing(
+        context=context,
+        incoming_dim=df,
+        scd_cols=cfg.PROD_DIM_SCD_COLS,
+    )
     return df
 
 
@@ -127,7 +139,7 @@ def targetto_us_silver_prod_dim(
         "name": cfg.RETAILER_NAME,
         "region": cfg.REGION,
         "country": cfg.COUNTRY,
-        "merge_predicate": "s.site_id = t.site_id",
+        "merge_predicate": "s.site_key = t.site_key",
     },
     kinds={"polars", "deltalake", "silver"},
 )
@@ -150,7 +162,7 @@ def targetto_us_silver_site_dim(
                 f"Column {col} exists in the standard data model and should be mapped directly."
             )
     df = targetto_us_bronze_day_fact.select(
-        pl.col("store_id").cast(pl.Int64).alias("site_id"),
+        pl.col("store_id").alias("site_id"),
         pl.col("store").alias("site_name"),
         pl.col("global_location_number").cast(pl.Int64).alias("global_location_number"),
         pl.col("address").alias("address"),
@@ -168,7 +180,11 @@ def targetto_us_silver_site_dim(
             "extra_attributes"
         ),
     )
-    df = silver_site_dim_processing(context=context, df=df)
+    df = silver_site_dim_processing(
+        context=context,
+        incoming_dim=df,
+        scd_cols=cfg.SITE_DIM_SCD_COLS,
+    )
     return df
 
 

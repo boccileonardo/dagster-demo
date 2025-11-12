@@ -52,6 +52,8 @@ def lidlo_de_silver_day_fact(
         df=df,
         prod_dim=lidlo_de_silver_prod_dim,
         site_dim=lidlo_de_silver_site_dim,
+        antitrust_masking_selection="volume",
+        granularity="daily",
     )
     return df
 

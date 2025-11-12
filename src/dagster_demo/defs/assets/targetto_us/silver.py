@@ -70,6 +70,8 @@ def targetto_us_silver_day_fact(
         df=df,
         prod_dim=targetto_us_silver_prod_dim,
         site_dim=targetto_us_silver_site_dim,
+        granularity="daily",
+        antitrust_masking_selection=None,
     )
     return df
 

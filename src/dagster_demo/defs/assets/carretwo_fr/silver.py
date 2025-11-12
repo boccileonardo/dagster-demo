@@ -45,6 +45,8 @@ def carretwo_fr_silver_day_fact(
         df=df,
         prod_dim=carretwo_fr_silver_prod_dim,
         site_dim=carretwo_fr_silver_site_dim,
+        antitrust_masking_selection="value",
+        granularity="daily",
     )
     return df
 

@@ -120,6 +120,10 @@ store_fact_pl_schema: dict[str, pl.DataType] = {
     "inventory_value_on_hand_lc": pl.Float64(),
     # Hold non standard retailer columns
     "extra_attributes": pl.Struct({}),
+    # Antitrust
+    "at_masked_pos_sales_units": pl.Int64(),
+    "at_masked_pos_sales_value_usd": pl.Float64(),
+    "at_masked_pos_sales_value_lc": pl.Float64(),
 }
 
 store_fact_required_cols: list[str] = [

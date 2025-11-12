@@ -30,6 +30,10 @@ def targetto_us_bronze_day_fact(context: dg.AssetExecutionContext) -> pl.LazyFra
     df = pl.scan_csv(cfg.DIRECTORY, separator="|")
     if context.has_partition_key:  # partitioned runs
         df = df.filter(pl.col("date") == context.partition_key)
+        if df.limit(1).collect().is_empty():
+            raise ValueError(
+                f"No data available for partition: {context.partition_key}"
+            )
     df = bronze_processing(
         context=context,
         df=df,

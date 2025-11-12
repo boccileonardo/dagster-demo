@@ -272,6 +272,88 @@ def _prefix_cols(df: pl.LazyFrame, prefix: str, exclude: list[str] = []):
     )
 
 
+def _apply_antitrust_masking(
+    df: pl.LazyFrame,
+    mask_selection: Literal["value", "volume"],
+    granularity: Literal["daily", "weekly", "monthly"],
+) -> pl.LazyFrame:
+    """Apply moving average antitrust masking to specified columns.
+
+    Creates new columns with 'at_masked_' prefix containing moving averages of the masked columns.
+
+    Args:
+        df: Fact table with time_period_end_date column
+        mask_selection: "value" or "volume". Value will mask both USD and local currency.
+        granularity: Time granularity determining window size:
+            - 'daily': 7-day moving average
+            - 'weekly': 4-week moving average
+            - 'monthly': 3-month moving average
+
+    Returns:
+        DataFrame with additional at_masked_{column} columns
+    """
+    # Define window sizes based on granularity (in number of periods)
+    window_config = {
+        "daily": 7,
+        "weekly": 4,
+        "monthly": 3,
+    }
+
+    if granularity not in window_config:
+        raise ValueError(
+            f"Invalid granularity '{granularity}'. Must be one of: {list(window_config.keys())}"
+        )
+    window_size = window_config[granularity]
+
+    if mask_selection not in ["value", "volume"]:
+        raise ValueError("Select `value` or `volume` masking.")
+
+    # Get available columns in the dataframe
+    schema = df.collect_schema()
+    available_cols = set(schema.names())
+
+    # Define potential columns to mask based on selection
+    if mask_selection == "volume":
+        potential_columns = ["pos_sales_units"]
+    else:  # value
+        potential_columns = ["pos_sales_value_usd", "pos_sales_value_lc"]
+
+    # Only mask columns that actually exist in the dataframe
+    columns_to_mask = [col for col in potential_columns if col in available_cols]
+
+    if not columns_to_mask:
+        logger.warning(
+            f"No columns available to mask for {mask_selection} selection. "
+            f"Looking for {potential_columns}, available: {list(available_cols)}"
+        )
+        return df
+
+    logger.info(
+        f"Applying {mask_selection} antitrust masking to {columns_to_mask} with {window_size}-period window"
+    )
+
+    # Apply moving average to each column
+    # Group by prod_id and site_id to calculate moving averages within each product-site combination
+    df = df.sort(["prod_id", "site_id", "time_period_end_date"])
+    masked_exprs = []
+    for col in columns_to_mask:
+        masked_col_name = f"at_masked_{col}"
+        expr = (
+            pl.col(col)
+            .rolling_mean(window_size=window_size)
+            .over(["prod_id", "site_id"])
+            .alias(masked_col_name)
+        )
+        if mask_selection == "volume":
+            expr = expr.round(0).cast(pl.Int64)
+
+        masked_exprs.append(expr)
+
+    df = df.with_columns(masked_exprs)
+
+    return df
+
+
 def _load_product_master_data():
     df = pl.scan_parquet("faker/data/corporate_product_master_data.parquet")
     return _prefix_cols(df, prefix="corp")
@@ -302,6 +384,8 @@ def silver_fact_processing(
     df: pl.LazyFrame,
     prod_dim: pl.LazyFrame,
     site_dim: pl.LazyFrame,
+    granularity: Literal["daily", "weekly", "monthly"],
+    antitrust_masking_selection: Literal["value", "volume"] | None = None,
 ):
     df = df.unique()  # deduplication of bronze data
 
@@ -322,6 +406,14 @@ def silver_fact_processing(
         site_dim=site_dim,
         fact_date_col="time_period_end_date",
     )
+
+    # Apply antitrust masking if columns are specified
+    if antitrust_masking_selection:
+        df = _apply_antitrust_masking(
+            df=df,
+            mask_selection=antitrust_masking_selection,
+            granularity=granularity,
+        )
 
     add_materialization_metadata(
         context=context, df=df, count_dates_in_col="time_period_end_date"
@@ -461,7 +553,31 @@ def silver_fact_downsample(
         df (pl.LazyFrame): more granular dataframe
         sampling_period ("1w" OR "1mo"): aggregation level for dates
     """
-    df = df.sort("time_period_end_date")
+    # Determine granularity for antitrust masking based on sampling period
+    granularity_map: dict[str, Literal["daily", "weekly", "monthly"]] = {
+        "1w": "weekly",
+        "1mo": "monthly",
+    }
+    granularity = granularity_map[sampling_period]
+
+    # Identify antitrust masked columns in the input dataframe
+    schema = df.collect_schema()
+    at_masked_cols = [col for col in schema.names() if col.startswith("at_masked_")]
+
+    # Determine mask selection based on which columns are masked
+    mask_selection = None
+    if at_masked_cols:
+        if "at_masked_pos_sales_units" in at_masked_cols:
+            mask_selection = "volume"
+        elif (
+            "at_masked_pos_sales_value_usd" in at_masked_cols
+            or "at_masked_pos_sales_value_lc" in at_masked_cols
+        ):
+            mask_selection = "value"
+
+    # group_by_dynamic requires sorted input on the index column
+    df = df.sort(["prod_id", "site_id", "time_period_end_date"])
+
     df = df.group_by_dynamic(
         index_column="time_period_end_date",
         group_by=["prod_id", "site_id", "data_provider_code"],
@@ -471,6 +587,15 @@ def silver_fact_downsample(
         cs.numeric().sum(),
     )
     df = add_ingestion_metadata(df=df, data_source="aggregation")
+
+    # Reapply antitrust masking after aggregation with appropriate window
+    if mask_selection:
+        df = _apply_antitrust_masking(
+            df=df,
+            mask_selection=mask_selection,
+            granularity=granularity,
+        )
+
     add_materialization_metadata(
         context=context,
         df=df,

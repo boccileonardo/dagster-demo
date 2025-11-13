@@ -14,7 +14,7 @@ echo 'export DAGSTER_HOME="~/repos/dagster-demo/.dagster_home"' >> ~/.bashrc
 Restart shell
 ```sh
 uv run faker/generate.py
-sudo ./setup-data.sh
+./setup-data.sh
 # turn on the eager automation sensor in the dagster UI to allow auto materialization
 uv sync
 uv run dg dev

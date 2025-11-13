@@ -37,7 +37,7 @@ See `retailer-onboarding.md` for step-by-step instructions.
 - Use `uv` for running scripts and managing dependencies.
 - Main entrypoints:
   - `uv run faker/generate.py` (generate synthetic data)
-  - `sudo ./setup-data.sh` (setup data directories and clean up)
+  - `./setup-data.sh` (setup data directories and clean up)
   - `uv run dg dev` (start Dagster development server)
   - `uv run dg launch --assets {assetname}` (optionally add `--partition {partitionkey}` for partitioned assets.)
 

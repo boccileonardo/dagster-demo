@@ -1,13 +1,11 @@
 #!/bin/bash
 
-#delete contents of dagster home
-rm -rf .dagster_home/*/
+# delete contents of dagster home (including hidden directories)
+rm -rf .dagster_home/.*/ .dagster_home/*/
 
-# delete directories and contents
-rm -rf data/landing/*
-rm -rf data/bronze/*
-rm -rf data/silver/*
-rm -rf data/gold/*
+# delete directories and contents (or create if they don't exist)
+mkdir -p data/landing data/bronze data/silver data/gold
+find data/landing data/bronze data/silver data/gold -mindepth 1 -delete
 
 # create directories
 mkdir -p data/landing/1001

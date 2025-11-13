@@ -27,7 +27,7 @@ def generate_uniform_dates(start_date, end_date, missing_prob=0.05):
 
 # --- Constants ---
 START_DATE = datetime.today() - timedelta(days=90)
-END_DATE = datetime.today()
+END_DATE = datetime.today() - timedelta(days=1)
 DATES = generate_uniform_dates(START_DATE, END_DATE, missing_prob=0.05)
 PRODUCTS = [fake.name() for _ in range(200)]
 STORES = [f"Store_{i:03d}" for i in range(1, 50)]
